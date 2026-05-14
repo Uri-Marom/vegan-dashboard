@@ -88,6 +88,7 @@ TOP_COMPANIES = [
     {
         "company": "Berkshire Hathaway",
         "ticker": "BRK",
+        "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Berkshire_Hathaway_logo.svg/200px-Berkshire_Hathaway_logo.svg.png",
         "domain": "berkshirehathaway.com",
         "category": "עור, מזון",
         "nis": 760_380_671,
@@ -104,6 +105,7 @@ TOP_COMPANIES = [
     {
         "company": "Coca-Cola",
         "ticker": "KO",
+        "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Coca-Cola_logo.svg/200px-Coca-Cola_logo.svg.png",
         "domain": "coca-cola.com",
         "category": "מזון, ניסויים",
         "nis": 681_399_864,
@@ -368,7 +370,7 @@ def main():
         yaxis=dict(title="", automargin=True),
         plot_bgcolor="white",
         height=420,
-        margin=dict(l=20, r=80, t=10, b=40),
+        margin=dict(l=120, r=80, t=10, b=40),
     )
     st.plotly_chart(fig2, use_container_width=True)
 
@@ -425,15 +427,15 @@ def main():
         yaxis=dict(title="", automargin=True),
         plot_bgcolor="white",
         height=420,
-        margin=dict(l=20, r=80, t=10, b=10),
+        margin=dict(l=210, r=80, t=10, b=10),
         showlegend=False,
     )
     st.plotly_chart(fig_top, use_container_width=True)
     st.caption("✂ בר מקוצר — הערך המלא מוצג בתווית")
 
-    # Company cards with logos (Google favicon service — reliable for all domains)
+    # Company cards with logos
     for row in TOP_COMPANIES:
-        logo_url = f"https://www.google.com/s2/favicons?domain={row['domain']}&sz=64"
+        logo_url = row.get("logo_url") or f"https://www.google.com/s2/favicons?domain={row['domain']}&sz=64"
         st.markdown(
             f"""
             <div style='display:flex;align-items:center;gap:1.2rem;padding:0.9rem 0;
