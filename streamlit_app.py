@@ -221,14 +221,20 @@ def main():
         "vegan_flagged_pct", "vegan_flagged_sum", "top_vegan_flagged_holdings_str",
     ] if c in filtered.columns]
 
+    COL_CONFIG = {
+        "Fund": st.column_config.TextColumn("Fund"),
+        "Investment house": st.column_config.TextColumn("Investment house"),
+        "Type": st.column_config.TextColumn("Type"),
+        "Grade": st.column_config.NumberColumn("Grade", format="%d"),
+        "% animal exploitation": st.column_config.NumberColumn("% animal exploitation", format="%.1f%%"),
+        "NIS in animal exploitation": st.column_config.TextColumn("NIS in animal exploitation"),
+        "Top offending companies": st.column_config.TextColumn("Top offending companies"),
+    }
+
     def fmt_table(df):
         out = df[display_cols].copy()
         if "vegan_flagged_sum" in out.columns:
             out["vegan_flagged_sum"] = out["vegan_flagged_sum"].apply(fmt_nis)
-        if "vegan_flagged_pct" in out.columns:
-            out["vegan_flagged_pct"] = out["vegan_flagged_pct"].apply(
-                lambda x: f"{x:.1f}%" if pd.notna(x) else "—"
-            )
         return out.rename(columns={
             "fund_name": "Fund",
             "parent_short_name": "Investment house",
@@ -244,14 +250,14 @@ def main():
             "vegan_flagged_sum", ascending=False
         )
         st.caption(f"{len(worst_funds)} funds")
-        st.dataframe(fmt_table(worst_funds), use_container_width=True, hide_index=True)
+        st.dataframe(fmt_table(worst_funds), use_container_width=True, hide_index=True, column_config=COL_CONFIG)
 
     with tab_best:
         best_funds = filtered[filtered["vegan_grade_int"] == 1].sort_values(
             "vegan_flagged_sum"
         )
         st.caption(f"{len(best_funds)} funds — lower NIS exposure, better for vegans")
-        st.dataframe(fmt_table(best_funds), use_container_width=True, hide_index=True)
+        st.dataframe(fmt_table(best_funds), use_container_width=True, hide_index=True, column_config=COL_CONFIG)
 
     with tab_all:
         search = st.text_input("Search fund name", "")
@@ -261,7 +267,7 @@ def main():
         st.caption(f"{len(view)} funds")
         st.dataframe(
             fmt_table(view.sort_values("vegan_grade", ascending=False)),
-            use_container_width=True, hide_index=True,
+            use_container_width=True, hide_index=True, column_config=COL_CONFIG,
         )
 
     st.markdown("---")
