@@ -7,6 +7,7 @@ import os
 
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 SHEET_ID = "13TBGxhTo970evb5VCZ-hMDJzGKqY7SlDO5bV74rlSDo"
@@ -15,13 +16,23 @@ GRADE_COLORS = {1: "#2ecc71", 2: "#a8e063", 3: "#f5a623", 4: "#e67e22", 5: "#e74
 GRADE_LABELS = {1: "1 – מיטבי", 2: "2", 3: "3 – בינוני", 4: "4", 5: "5 – הגרוע ביותר"}
 ANIMAL_RED = "#e74c3c"
 
+# Major parent company legal IDs (from parent_company.is_major = 1)
+MAJOR_PARENT_IDS = {
+    "513621110", "513173393", "511880460", "520023185", "513026484",
+    "520004078", "512267592", "513611509", "520024647", "512244146",
+    "520004896", "512237744", "514956465", "512065202", "520042540", "512245812",
+}
+
+# Number of Israelis with pension/savings accounts (source: Israeli CBS / Clearance authority)
+ISRAELI_SAVERS = 4_500_000
+
 # Top 10 animal-exploiting companies by total NIS invested across all funds (2025Q4)
-# NIS values computed from holdings_flagged: SUM(value * Animal_Exploitation_flag) per figi_name_norm
-# value column is in thousands ILS → multiplied by 1000 for actual ILS
+# NIS values: SUM(holdings_flagged.value * Animal_Exploitation_flag) per figi_name_norm × 1000 (thousands→ILS)
 TOP_COMPANIES = [
     {
         "company": "Teva Pharmaceutical",
         "ticker": "TEVA",
+        "domain": "tevapharm.com",
         "category": "ניסויים בבעלי חיים",
         "nis": 20_007_316_813,
         "desc": "טבע מפתחת ובודקת תרופות גנריות וייחודיות על בעלי חיים, ובכלל זה מחקרים על מודלים של מחלות דלקתיות.",
@@ -29,6 +40,7 @@ TOP_COMPANIES = [
     {
         "company": "Amazon.com",
         "ticker": "AMZN",
+        "domain": "amazon.com",
         "category": "מזון, עור, פרווה",
         "nis": 8_480_817_380,
         "desc": "אמזון מוכרת מוצרי בשר, חלב וביצים, פריטי עור ופרווה, ואף שיווקה פואה גרה מיצרנים שתועדה אצלם אכזריות כלפי בעלי חיים.",
@@ -36,6 +48,7 @@ TOP_COMPANIES = [
     {
         "company": "Eli Lilly",
         "ticker": "LLY",
+        "domain": "lilly.com",
         "category": "ניסויים בבעלי חיים",
         "nis": 2_246_871_530,
         "desc": "אלי לילי מבצעת ניסויים בבעלי חיים לצורך בדיקת בטיחות תרופותיה, בהתאם לדרישות ה-FDA.",
@@ -43,6 +56,7 @@ TOP_COMPANIES = [
     {
         "company": "AbbVie",
         "ticker": "ABBV",
+        "domain": "abbvie.com",
         "category": "ניסויים בבעלי חיים",
         "nis": 1_065_820_751,
         "desc": "אבווי מבצעת ניסויים נרחבים בבעלי חיים במסגרת המחקר והפיתוח של מוצריה הביו-פרמצבטיים.",
@@ -50,6 +64,7 @@ TOP_COMPANIES = [
     {
         "company": "Walmart",
         "ticker": "WMT",
+        "domain": "walmart.com",
         "category": "מזון, עור, חיות מחמד",
         "nis": 929_573_593,
         "desc": "וולמארט מוכרת מזון מן החי, מוצרי עור ופרווה, וכן חיות מחמד בחלק מהסניפים.",
@@ -57,6 +72,7 @@ TOP_COMPANIES = [
     {
         "company": "Home Depot",
         "ticker": "HD",
+        "domain": "homedepot.com",
         "category": "עור, מזון",
         "nis": 915_038_785,
         "desc": "הום דיפו מוכרת כפפות עבודה ופריטי עור נוספים, וכן מזון המכיל מוצרים מן החי.",
@@ -64,6 +80,7 @@ TOP_COMPANIES = [
     {
         "company": "Alibaba Group",
         "ticker": "BABA",
+        "domain": "alibaba.com",
         "category": "מזון, עור, פרווה",
         "nis": 914_846_125,
         "desc": "עליבאבא משווקת מוצרי עור, פרווה ומזון מן החי דרך הפלטפורמות הדיגיטליות שלה.",
@@ -71,6 +88,7 @@ TOP_COMPANIES = [
     {
         "company": "Berkshire Hathaway",
         "ticker": "BRK",
+        "domain": "berkshirehathaway.com",
         "category": "עור, מזון",
         "nis": 760_380_671,
         "desc": "ברקשייר מחזיקה בחברות בתחום ההנעלה מעור, ברשתות מזון (Dairy Queen, Kraft Heinz) ועוד.",
@@ -78,6 +96,7 @@ TOP_COMPANIES = [
     {
         "company": "Honeywell International",
         "ticker": "HON",
+        "domain": "honeywell.com",
         "category": "עור",
         "nis": 711_754_291,
         "desc": "האניוול מייצרת ומשווקת נעליים מעור באמצעות חברת הבת Muck Boots.",
@@ -85,6 +104,7 @@ TOP_COMPANIES = [
     {
         "company": "Coca-Cola",
         "ticker": "KO",
+        "domain": "coca-cola.com",
         "category": "מזון, ניסויים",
         "nis": 681_399_864,
         "desc": "קוקה-קולה משתמשת בג'לטין מדגים כחומר מייצב בחלק ממשקאותיה, ומסתמכת על ניסויים בבעלי חיים לבדיקת בטיחותם של מרכיבים.",
@@ -133,6 +153,12 @@ def load_data():
     if "parent_vegan_flagged_sum" in parents.columns:
         parents["parent_vegan_flagged_sum"] = parents["parent_vegan_flagged_sum"] * 1000
 
+    # Normalise legal_id for major-company filter
+    if "parent_company_legal_id" in parents.columns:
+        parents["_legal_id_str"] = (
+            parents["parent_company_legal_id"].astype(str).str.replace(r"\.0+$", "", regex=True)
+        )
+
     return funds, parents
 
 
@@ -150,7 +176,7 @@ def fmt_nis(val, decimals=1):
 
 def main():
     st.set_page_config(
-        page_title="כספי הפנסיה שלך מממנים פגיעה בבעלי חיים",
+        page_title="כספי הפנסיה של כולנו מממנים פגיעה בבעלי חיים",
         page_icon="🐄",
         layout="wide",
     )
@@ -165,24 +191,17 @@ def main():
     st.markdown(
         """
         <style>
-        /* RTL for the entire app */
         html, body, [class*="css"] { direction: rtl; }
         .stApp { direction: rtl; }
-        /* Sidebar RTL */
         section[data-testid="stSidebar"] { direction: rtl; }
-        /* Main content blocks */
         .stMarkdown, .stText, .stCaption,
         div[data-testid="metric-container"],
         div[data-testid="stExpander"],
         .stTabs, .stDataFrame,
         label, p, h1, h2, h3, span { direction: rtl; text-align: right; }
-        /* Keep charts LTR so axes render correctly */
         .js-plotly-plot { direction: ltr; }
-        /* Metric value stays centered */
         div[data-testid="metric-container"] > div { text-align: right; }
-        /* Tab labels */
         .stTabs [data-baseweb="tab-list"] { justify-content: flex-end; }
-        /* Text inputs */
         input[type="text"] { direction: rtl; text-align: right; }
         </style>
         """,
@@ -211,7 +230,10 @@ def main():
     st.markdown(
         """
         <div style='text-align:center;padding:1rem 0 0.5rem'>
-          <h1 style='color:#2c3e50;margin-bottom:0.2rem'>🐄 כספי הפנסיה שלך מממנים פגיעה בבעלי חיים</h1>
+          <h1 style='color:#2c3e50;margin-bottom:0.2rem'>
+            🐄 כספי הפנסיה של כולנו מממנים פגיעה בבעלי חיים.<br>
+            <span style='font-size:0.7em;color:#e74c3c'>כן, גם שלך.</span>
+          </h1>
           <p style='color:#7f8c8d;font-size:1.1em;margin:0'>
             קופות פנסיה וחיסכון ישראליות — ניתוח חשיפה לחברות הפוגעות בבעלי חיים · רבעון 4, 2025
           </p>
@@ -223,20 +245,20 @@ def main():
 
     # ── Big central metric ────────────────────────────────────────────────────
     total_nis = graded["vegan_flagged_sum"].sum()
-    total_funds = len(graded)
+    avg_per_person = total_nis / ISRAELI_SAVERS
 
     st.markdown(
         f"""
         <div style='text-align:center;background:linear-gradient(135deg,#c0392b,#e74c3c);
                     border-radius:16px;padding:2rem 1rem;margin-bottom:1.5rem;color:white'>
           <div style='font-size:1.1rem;opacity:0.9;margin-bottom:0.4rem'>
-            סך הכסף שלכם המושקע בחברות הפוגעות בבעלי חיים
+            סך החסכונות של הציבור הישראלי המושקע בחברות הפוגעות בבעלי חיים
           </div>
           <div style='font-size:4rem;font-weight:800;letter-spacing:-1px;line-height:1.1'>
             {fmt_nis(total_nis)}
           </div>
-          <div style='font-size:0.95rem;opacity:0.85;margin-top:0.5rem'>
-            מתוך {total_funds:,} קופות שנבדקו · ממוצע של {total_nis/total_funds/1e6:.0f}M ש"ח לקופה
+          <div style='font-size:1rem;opacity:0.85;margin-top:0.6rem'>
+            ממוצע לאדם: <strong>{fmt_nis(avg_per_person, decimals=0)}</strong>
           </div>
         </div>
         """,
@@ -244,18 +266,16 @@ def main():
     )
 
     # ── Impact calculator ────────────────────────────────────────────────────
-    # Weighted avg exploitation rates by grade (from 2025Q4 fund_flags × funds_full AUM)
-    CURRENT_EXPLOIT_PCT = 6.56   # weighted avg across all graded funds
-    GRADE1_EXPLOIT_PCT  = CURRENT_EXPLOIT_PCT / 2  # assumption: moving to a cleaner fund halves exposure
+    CURRENT_EXPLOIT_PCT = 6.56
+    GRADE1_EXPLOIT_PCT  = CURRENT_EXPLOIT_PCT / 2
 
     VF_MEMBERS    = 6_500
     VF_FOLLOWERS  = 400_000
 
     st.markdown("---")
-    st.subheader("כוח השינוי של קהילת ויגן פריינדלי")
+    st.subheader("כוח השינוי של קהילת ויגן פרנדלי")
     st.markdown(
-        "מה יקרה אם חברי ויגן פריינדלי יעברו מהקופה הממוצעת לקופה בדירוג 1 — "
-        "הקופה הנקייה ביותר מניצול בעלי חיים?"
+        "מה יקרה אם חברי וחברות ויגן פרנדלי יגלו איפה הכסף שלהם מושקע?"
     )
 
     avg_savings = st.slider(
@@ -301,12 +321,12 @@ def main():
         """
 
     st.markdown(
-        _impact_card(f"6,500 חברי ויגן אקטיב", VF_MEMBERS, "#8e44ad"),
+        _impact_card("6,500 חברי ויגן אקטיב", VF_MEMBERS, "#8e44ad"),
         unsafe_allow_html=True,
     )
     st.markdown("<div style='height:0.8rem'></div>", unsafe_allow_html=True)
     st.markdown(
-        _impact_card(f"400,000 עוקבי ויגן פריינדלי", VF_FOLLOWERS, "#2980b9"),
+        _impact_card("400,000 עוקבי ויגן פרנדלי", VF_FOLLOWERS, "#2980b9"),
         unsafe_allow_html=True,
     )
 
@@ -319,27 +339,37 @@ def main():
     )
     st.markdown("---")
 
-    # ── Investment houses by % ────────────────────────────────────────────────
-    st.subheader("בתי ההשקעות עם שיעור החשיפה הגבוה ביותר לפגיעה בבעלי חיים")
+    # ── Investment houses by % (major only) ──────────────────────────────────
+    st.subheader("מדרג בתי השקעות")
     name_col = "parent_short_name" if "parent_short_name" in parents.columns else "parent_company_legal_id"
-    worst_parents = (
-        parents[parents["parent_vegan_flagged_pct"].notna()]
-        .sort_values("parent_vegan_flagged_pct", ascending=False)
-        .head(12)
-        .copy()
+    major_parents = parents[
+        parents["_legal_id_str"].isin(MAJOR_PARENT_IDS) &
+        parents["parent_vegan_flagged_pct"].notna()
+    ].copy()
+    # Aggregate in case same short_name has multiple legal IDs
+    major_agg = (
+        major_parents.groupby(name_col)["parent_vegan_flagged_pct"]
+        .mean()
+        .sort_values(ascending=True)
+        .reset_index()
     )
-    worst_parents["pct_fmt"] = worst_parents["parent_vegan_flagged_pct"].apply(lambda x: f"{x:.1f}%")
-    fig2 = px.bar(
-        worst_parents, x="parent_vegan_flagged_pct", y=name_col,
-        orientation="h", text="pct_fmt",
-        color_discrete_sequence=[ANIMAL_RED],
-    )
+    major_agg["pct_fmt"] = major_agg["parent_vegan_flagged_pct"].apply(lambda x: f"{x:.1f}%")
+
+    fig2 = go.Figure(go.Bar(
+        x=major_agg["parent_vegan_flagged_pct"],
+        y=major_agg[name_col],
+        orientation="h",
+        text=major_agg["pct_fmt"],
+        textposition="outside",
+        marker_color=ANIMAL_RED,
+    ))
     fig2.update_layout(
-        yaxis={"categoryorder": "total ascending"},
-        xaxis_title="% מהתיק המכוסה", yaxis_title="",
-        plot_bgcolor="white", height=380,
+        xaxis=dict(title="% מהתיק המכוסה", ticksuffix="%"),
+        yaxis=dict(title="", automargin=True),
+        plot_bgcolor="white",
+        height=420,
+        margin=dict(l=20, r=80, t=10, b=40),
     )
-    fig2.update_traces(textposition="outside")
     st.plotly_chart(fig2, use_container_width=True)
 
     # ── Methodology ───────────────────────────────────────────────────────────
@@ -363,14 +393,12 @@ def main():
 
     # ── Top 10 companies ──────────────────────────────────────────────────────
     st.subheader("10 החברות הפוגעות בבעלי חיים שמושקע בהן הסכום הגבוה ביותר")
-    st.caption("מחושב לפי סך הש\"ח המושקעים בכל חברה על ידי קופות הפנסיה הישראליות · רבעון 4, 2025")
-
-    import plotly.graph_objects as go
+    st.caption('סה"כ השקעה בכל חברה על ידי קופות הפנסיה * רבעון 4, 2025')
 
     top_df = pd.DataFrame(TOP_COMPANIES).sort_values("nis")
     top_df["nis_fmt"] = top_df["nis"].apply(fmt_nis)
 
-    # Cap display at ₪3B; top 2 are truncated (Teva ₪20B, Amazon ₪8.5B)
+    # Cap display at ₪3B; Teva (₪20B) and Amazon (₪8.5B) are truncated
     CAP = 3_000_000_000
     top_df["nis_display"] = top_df["nis"].clip(upper=CAP)
     top_df["is_truncated"] = top_df["nis"] > CAP
@@ -393,46 +421,27 @@ def main():
         marker_pattern_size=6,
     ))
     fig_top.update_layout(
-        xaxis=dict(range=[0, CAP * 1.55], title="₪", tickformat=",.0f"),
-        yaxis=dict(title=""),
+        xaxis=dict(range=[0, CAP * 1.6], title="₪", tickformat=",.0f"),
+        yaxis=dict(title="", automargin=True),
         plot_bgcolor="white",
-        height=400,
-        margin=dict(l=10, r=10, t=10, b=30),
-    )
-    fig_top.add_annotation(
-        text="✂ הבר מקוצר — הערך המלא מוצג בתווית",
-        xref="paper", yref="paper", x=1, y=-0.06,
-        showarrow=False, font=dict(size=11, color="#888"), xanchor="right",
+        height=420,
+        margin=dict(l=20, r=80, t=10, b=10),
+        showlegend=False,
     )
     st.plotly_chart(fig_top, use_container_width=True)
+    st.caption("✂ בר מקוצר — הערך המלא מוצג בתווית")
 
-    # Company cards with logos
-    LOGOS = {
-        "TEVA":  "https://logo.clearbit.com/teva.com",
-        "AMZN":  "https://logo.clearbit.com/amazon.com",
-        "LLY":   "https://logo.clearbit.com/lilly.com",
-        "ABBV":  "https://logo.clearbit.com/abbvie.com",
-        "WMT":   "https://logo.clearbit.com/walmart.com",
-        "HD":    "https://logo.clearbit.com/homedepot.com",
-        "BABA":  "https://logo.clearbit.com/alibaba.com",
-        "BRK":   "https://logo.clearbit.com/berkshirehathaway.com",
-        "HON":   "https://logo.clearbit.com/honeywell.com",
-        "KO":    "https://logo.clearbit.com/coca-cola.com",
-    }
-
+    # Company cards with logos (Google favicon service — reliable for all domains)
     for row in TOP_COMPANIES:
-        logo_url = LOGOS.get(row["ticker"], "")
-        logo_html = (
-            f"<img src='{logo_url}' style='width:48px;height:48px;object-fit:contain;"
-            f"border-radius:8px;background:#f8f8f8;padding:4px' onerror=\"this.style.display='none'\">"
-            if logo_url else ""
-        )
+        logo_url = f"https://www.google.com/s2/favicons?domain={row['domain']}&sz=64"
         st.markdown(
             f"""
-            <div style='display:flex;align-items:center;gap:1.2rem;padding:0.8rem 0;
+            <div style='display:flex;align-items:center;gap:1.2rem;padding:0.9rem 0;
                         border-bottom:1px solid #f0f0f0'>
-              <div style='flex-shrink:0'>{logo_html}</div>
-              <div style='flex-shrink:0;min-width:130px'>
+              <img src='{logo_url}' width='40' height='40'
+                   style='border-radius:8px;background:#f8f8f8;padding:4px;flex-shrink:0'
+                   onerror="this.style.visibility='hidden'">
+              <div style='flex-shrink:0;min-width:150px'>
                 <div style='font-weight:700;font-size:1rem'>{row['company']}</div>
                 <div style='color:{ANIMAL_RED};font-size:1.1rem;font-weight:800'>{fmt_nis(row['nis'])}</div>
                 <div style='color:#999;font-size:0.78rem'>{row['category']}</div>
