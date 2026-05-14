@@ -162,6 +162,33 @@ def main():
     except Exception:
         pass
 
+    st.markdown(
+        """
+        <style>
+        /* RTL for the entire app */
+        html, body, [class*="css"] { direction: rtl; }
+        .stApp { direction: rtl; }
+        /* Sidebar RTL */
+        section[data-testid="stSidebar"] { direction: rtl; }
+        /* Main content blocks */
+        .stMarkdown, .stText, .stCaption,
+        div[data-testid="metric-container"],
+        div[data-testid="stExpander"],
+        .stTabs, .stDataFrame,
+        label, p, h1, h2, h3, span { direction: rtl; text-align: right; }
+        /* Keep charts LTR so axes render correctly */
+        .js-plotly-plot { direction: ltr; }
+        /* Metric value stays centered */
+        div[data-testid="metric-container"] > div { text-align: right; }
+        /* Tab labels */
+        .stTabs [data-baseweb="tab-list"] { justify-content: flex-end; }
+        /* Text inputs */
+        input[type="text"] { direction: rtl; text-align: right; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     with st.spinner("טוען נתונים..."):
         funds, parents = load_data()
 
