@@ -246,7 +246,7 @@ def main():
     # ── Impact calculator ────────────────────────────────────────────────────
     # Weighted avg exploitation rates by grade (from 2025Q4 fund_flags × funds_full AUM)
     CURRENT_EXPLOIT_PCT = 6.56   # weighted avg across all graded funds
-    GRADE1_EXPLOIT_PCT  = 0.38   # weighted avg of grade-1 funds only
+    GRADE1_EXPLOIT_PCT  = CURRENT_EXPLOIT_PCT / 2  # assumption: moving to a cleaner fund halves exposure
 
     VF_MEMBERS    = 6_500
     VF_FOLLOWERS  = 400_000
@@ -312,8 +312,8 @@ def main():
 
     st.markdown(
         f"<p style='color:#888;font-size:0.82rem;margin-top:0.6rem;text-align:right'>"
-        f"הנחות: שיעור ניצול ממוצע בקופות היום — {CURRENT_EXPLOIT_PCT}% · "
-        f"שיעור ניצול ממוצע בקופות דירוג 1 — {GRADE1_EXPLOIT_PCT}% · "
+        f"הנחות: שיעור ניצול ממוצע היום — {CURRENT_EXPLOIT_PCT}% · "
+        f"שיעור ניצול אחרי מעבר לקופה נקייה — {GRADE1_EXPLOIT_PCT:.2f}% (מחצית מהממוצע הנוכחי) · "
         f"חיסכון ממוצע לאדם — {fmt_nis(avg_savings)}</p>",
         unsafe_allow_html=True,
     )
