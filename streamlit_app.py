@@ -227,14 +227,12 @@ def main():
         "Type": st.column_config.TextColumn("Type"),
         "Grade": st.column_config.NumberColumn("Grade", format="%d"),
         "% animal exploitation": st.column_config.NumberColumn("% animal exploitation", format="%.1f%%"),
-        "NIS in animal exploitation": st.column_config.TextColumn("NIS in animal exploitation"),
+        "NIS in animal exploitation": st.column_config.NumberColumn("NIS in animal exploitation", format="₪%,.0f"),
         "Top offending companies": st.column_config.TextColumn("Top offending companies"),
     }
 
     def fmt_table(df):
         out = df[display_cols].copy()
-        if "vegan_flagged_sum" in out.columns:
-            out["vegan_flagged_sum"] = out["vegan_flagged_sum"].apply(fmt_nis)
         return out.rename(columns={
             "fund_name": "Fund",
             "parent_short_name": "Investment house",
