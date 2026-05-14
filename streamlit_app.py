@@ -154,7 +154,7 @@ def load_data():
         funds["fund_name"] = (
             funds["fund_name"]
             .apply(_html.unescape)
-            .str.replace(r"S\d+;P", "S&P", regex=True)
+            .str.replace(r"[Ss]\d+;[Pp]", "S&P", regex=True)
         )
 
     for col in ["parent_vegan_grade", "parent_vegan_flagged_pct", "parent_vegan_flagged_sum",
@@ -439,20 +439,28 @@ def main():
         yaxis=dict(title="", automargin=True),
         plot_bgcolor="white",
         height=420,
-        margin=dict(l=210, r=20, t=10, b=40),
+        margin=dict(l=210, r=20, t=10, b=10),
         showlegend=False,
     )
+    # Dashed cutoff line at CAP
+    fig_top.add_shape(
+        type="line", xref="x", yref="paper",
+        x0=CAP, x1=CAP, y0=0, y1=1,
+        line=dict(color="#aaa", width=1.5, dash="dot"),
+    )
+    # Annotation next to the top-2 truncated bars
     fig_top.add_annotation(
-        text="✂ בר מקוצר — הערך המלא מוצג בתווית",
-        xref="paper", yref="paper",
-        x=1.0, y=-0.08,
-        xanchor="right", yanchor="top",
+        text="✂ בר מקוצר<br>הערך המלא<br>מוצג בתווית",
+        xref="x", yref="paper",
+        x=CAP * 1.04, y=0.88,
+        xanchor="left", yanchor="middle",
         showarrow=False,
-        font=dict(size=11, color="#888"),
+        font=dict(size=10, color="#888"),
         bgcolor="white",
-        bordercolor="#ddd",
+        bordercolor="#ccc",
         borderwidth=1,
-        borderpad=4,
+        borderpad=5,
+        align="center",
     )
     st.plotly_chart(fig_top, use_container_width=True)
 
