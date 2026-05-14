@@ -243,6 +243,82 @@ def main():
         unsafe_allow_html=True,
     )
 
+    # ── Impact calculator ────────────────────────────────────────────────────
+    # Weighted avg exploitation rates by grade (from 2025Q4 fund_flags × funds_full AUM)
+    CURRENT_EXPLOIT_PCT = 6.56   # weighted avg across all graded funds
+    GRADE1_EXPLOIT_PCT  = 0.38   # weighted avg of grade-1 funds only
+
+    VF_MEMBERS    = 6_500
+    VF_FOLLOWERS  = 400_000
+
+    st.markdown("---")
+    st.subheader("כוח השינוי של קהילת ויגן פריינדלי")
+    st.markdown(
+        "מה יקרה אם חברי ויגן פריינדלי יעברו מהקופה הממוצעת לקופה בדירוג 1 — "
+        "הקופה הנקייה ביותר מניצול בעלי חיים?"
+    )
+
+    avg_savings = st.slider(
+        "חיסכון ממוצע לאדם בכל הקופות (פנסיה, גמל, השתלמות, ביטוח)",
+        min_value=100_000,
+        max_value=1_500_000,
+        value=500_000,
+        step=50_000,
+        format="₪%d",
+    )
+
+    current_per_person = avg_savings * CURRENT_EXPLOIT_PCT / 100
+    clean_per_person   = avg_savings * GRADE1_EXPLOIT_PCT  / 100
+    saving_per_person  = current_per_person - clean_per_person
+
+    def _impact_card(group_name, n_people, color):
+        cur   = n_people * current_per_person
+        after = n_people * clean_per_person
+        saved = n_people * saving_per_person
+        return f"""
+        <div style='background:{color};border-radius:14px;padding:1.5rem;color:white;text-align:center'>
+          <div style='font-size:1.05rem;font-weight:600;margin-bottom:0.8rem'>{group_name}</div>
+          <div style='display:flex;justify-content:space-around;gap:1rem;flex-wrap:wrap'>
+            <div>
+              <div style='font-size:0.8rem;opacity:0.85'>מצב נוכחי</div>
+              <div style='font-size:1.6rem;font-weight:800'>{fmt_nis(cur)}</div>
+              <div style='font-size:0.75rem;opacity:0.75'>בחברות מנצלות</div>
+            </div>
+            <div style='font-size:2rem;opacity:0.6;align-self:center'>←</div>
+            <div>
+              <div style='font-size:0.8rem;opacity:0.85'>אחרי מעבר לקופה נקייה</div>
+              <div style='font-size:1.6rem;font-weight:800'>{fmt_nis(after)}</div>
+              <div style='font-size:0.75rem;opacity:0.75'>בחברות מנצלות</div>
+            </div>
+            <div style='font-size:2rem;opacity:0.6;align-self:center'>=</div>
+            <div style='background:rgba(255,255,255,0.15);border-radius:10px;padding:0.5rem 1rem'>
+              <div style='font-size:0.8rem;opacity:0.85'>הפחתה</div>
+              <div style='font-size:1.8rem;font-weight:800'>{fmt_nis(saved)}</div>
+              <div style='font-size:0.75rem;opacity:0.75'>מוצאים מהניצול</div>
+            </div>
+          </div>
+        </div>
+        """
+
+    st.markdown(
+        _impact_card(f"6,500 חברי ויגן אקטיב", VF_MEMBERS, "#8e44ad"),
+        unsafe_allow_html=True,
+    )
+    st.markdown("<div style='height:0.8rem'></div>", unsafe_allow_html=True)
+    st.markdown(
+        _impact_card(f"400,000 עוקבי ויגן פריינדלי", VF_FOLLOWERS, "#2980b9"),
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        f"<p style='color:#888;font-size:0.82rem;margin-top:0.6rem;text-align:right'>"
+        f"הנחות: שיעור ניצול ממוצע בקופות היום — {CURRENT_EXPLOIT_PCT}% · "
+        f"שיעור ניצול ממוצע בקופות דירוג 1 — {GRADE1_EXPLOIT_PCT}% · "
+        f"חיסכון ממוצע לאדם — {fmt_nis(avg_savings)}</p>",
+        unsafe_allow_html=True,
+    )
+    st.markdown("---")
+
     # ── Two charts ────────────────────────────────────────────────────────────
     col_a, col_b = st.columns(2)
 
