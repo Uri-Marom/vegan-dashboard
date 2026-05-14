@@ -89,6 +89,7 @@ TOP_COMPANIES = [
         "company": "Berkshire Hathaway",
         "ticker": "BRK",
         "domain": "berkshirehathaway.com",
+        "logo_url": "https://logo.clearbit.com/berkshirehathaway.com",
         "category": "עור, מזון",
         "nis": 760_380_671,
         "desc": "ברקשייר מחזיקה בחברות בתחום ההנעלה מעור, ברשתות מזון (Dairy Queen, Kraft Heinz) ועוד.",
@@ -104,7 +105,8 @@ TOP_COMPANIES = [
     {
         "company": "Coca-Cola",
         "ticker": "KO",
-        "domain": "coca-colacompany.com",
+        "domain": "coca-cola.com",
+        "logo_url": "https://logo.clearbit.com/coca-cola.com",
         "category": "מזון, ניסויים",
         "nis": 681_399_864,
         "desc": "קוקה-קולה משתמשת בג'לטין מדגים כחומר מייצב בחלק ממשקאותיה, ומסתמכת על ניסויים בבעלי חיים לבדיקת בטיחותם של מרכיבים.",
@@ -292,7 +294,6 @@ def main():
 
     def _impact_card(group_name, n_people, color):
         cur   = n_people * current_per_person
-        after = n_people * clean_per_person
         saved = n_people * saving_per_person
         return f"""
         <div style='background:{color};border-radius:14px;padding:1.5rem;color:white;text-align:center'>
@@ -301,19 +302,12 @@ def main():
             <div>
               <div style='font-size:0.8rem;opacity:0.85'>מצב נוכחי</div>
               <div style='font-size:1.6rem;font-weight:800'>{fmt_nis(cur)}</div>
-              <div style='font-size:0.75rem;opacity:0.75'>בחברות מנצלות</div>
+              <div style='font-size:0.75rem;opacity:0.75'>מושקעים בחברות מנצלות</div>
             </div>
-            <div style='font-size:2rem;opacity:0.6;align-self:center'>←</div>
-            <div>
-              <div style='font-size:0.8rem;opacity:0.85'>אחרי מעבר לקופה נקייה</div>
-              <div style='font-size:1.6rem;font-weight:800'>{fmt_nis(after)}</div>
-              <div style='font-size:0.75rem;opacity:0.75'>בחברות מנצלות</div>
-            </div>
-            <div style='font-size:2rem;opacity:0.6;align-self:center'>=</div>
-            <div style='background:rgba(255,255,255,0.15);border-radius:10px;padding:0.5rem 1rem'>
-              <div style='font-size:0.8rem;opacity:0.85'>הפחתה</div>
+            <div style='background:rgba(255,255,255,0.15);border-radius:10px;padding:0.5rem 1.5rem'>
+              <div style='font-size:0.8rem;opacity:0.85'>הפחתה פוטנציאלית</div>
               <div style='font-size:1.8rem;font-weight:800'>{fmt_nis(saved)}</div>
-              <div style='font-size:0.75rem;opacity:0.75'>מוצאים מהניצול</div>
+              <div style='font-size:0.75rem;opacity:0.75'>יוצאים מהניצול</div>
             </div>
           </div>
         </div>
@@ -375,6 +369,8 @@ def main():
     with st.expander("כיצד חושב המדד? על המתודולוגיה"):
         st.markdown(
             """
+            <div dir="rtl" style="text-align:right">
+
             **מקור הנתונים:** [CrueltyFreeInvesting.org](https://crueltyfreeinvesting.org) — ארגון עצמאי המפרסם רשימה של חברות ציבוריות הפועלות בניגוד לערכי הטבעונות.
 
             **שיטת הסיווג:** עבור כל חברה נבדקו האתר הרשמי שלה ופרסומים בתקשורת. החברות שברשימה עושות שימוש בבעלי חיים באחת מהדרכים הבאות:
@@ -384,8 +380,11 @@ def main():
             - ייצור או מכירה של מוצרים הכרוכים ב**ניסויים** בבעלי חיים
             - **גידול** בעלי חיים לצורכי מזון ו/או ניסויים
 
-            **חישוב הסכום:** עבור כל קופה סיכמנו את שווי ההחזקות בחברות המסווגות כפוגעות בבעלי חיים (בש"ח). שקלול סכום הכסף — ולא רק האחוז — מאפשר להבין את ההיקף הכספי האמיתי.
-            """
+            **ניתוח ההחזקות:** אנחנו מנתחים לעומק את ההחזקות של כל קופה, כולל החזקות מורכבות דרך מדדים.
+
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
     st.markdown("<br>", unsafe_allow_html=True)
@@ -437,7 +436,7 @@ def main():
     fig_top.add_annotation(
         text="✂ בר מקוצר<br>הערך המלא<br>מוצג בתווית",
         xref="x", yref="paper",
-        x=CAP * 1.04, y=0.88,
+        x=CAP * 1.42, y=0.88,
         xanchor="left", yanchor="middle",
         showarrow=False,
         font=dict(size=10, color="#888"),
@@ -482,10 +481,6 @@ def main():
     )
     filtered = graded[graded["subsystem"].isin(sel_sub)]
 
-    tab_worst, tab_best, tab_all = st.tabs(
-        ["🔴 קופות בעייתיות (דירוג 4–5)", "🟢 קופות מיטביות (דירוג 1)", "כל הקופות"]
-    )
-
     # RTL column order: most contextual info on the right, details on the left
     display_cols_ltr = [c for c in [
         "fund_name", "parent_short_name", "subsystem", "vegan_grade",
@@ -514,30 +509,15 @@ def main():
             "top_vegan_flagged_holdings_str": "חברות עם חשיפה גבוהה",
         })
 
-    with tab_worst:
-        worst_funds = filtered[filtered["vegan_grade_int"] >= 4].sort_values(
-            "vegan_flagged_pct", ascending=False
-        )
-        st.caption(f"{len(worst_funds)} קופות")
-        st.dataframe(fmt_table(worst_funds), use_container_width=True, hide_index=True, column_config=COL_CONFIG)
-
-    with tab_best:
-        best_funds = filtered[filtered["vegan_grade_int"] == 1].sort_values(
-            "vegan_flagged_pct", ascending=False
-        )
-        st.caption(f"{len(best_funds)} קופות — חשיפה נמוכה לפגיעה בבעלי חיים")
-        st.dataframe(fmt_table(best_funds), use_container_width=True, hide_index=True, column_config=COL_CONFIG)
-
-    with tab_all:
-        search = st.text_input("חיפוש לפי שם קופה", "")
-        view = filtered if not search else filtered[
-            filtered["fund_name"].str.contains(search, case=False, na=False)
-        ]
-        st.caption(f"{len(view)} קופות")
-        st.dataframe(
-            fmt_table(view.sort_values("vegan_flagged_pct", ascending=False)),
-            use_container_width=True, hide_index=True, column_config=COL_CONFIG,
-        )
+    search = st.text_input("חיפוש לפי שם קופה", "")
+    view = filtered if not search else filtered[
+        filtered["fund_name"].str.contains(search, case=False, na=False)
+    ]
+    st.caption(f"{len(view)} קופות · ממוינות לפי % חשיפה")
+    st.dataframe(
+        fmt_table(view.sort_values("vegan_flagged_pct", ascending=False)),
+        use_container_width=True, hide_index=True, column_config=COL_CONFIG,
+    )
 
     st.markdown("---")
     st.markdown(
