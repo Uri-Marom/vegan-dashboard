@@ -148,6 +148,15 @@ def load_data():
     if "vegan_flagged_sum" in funds.columns:
         funds["vegan_flagged_sum"] = funds["vegan_flagged_sum"] * 1000  # thousands → ILS
 
+    # Fix HTML-encoded ampersands in fund names (e.g. "S&amp;P" or "S1;P" → "S&P")
+    import html as _html
+    if "fund_name" in funds.columns:
+        funds["fund_name"] = (
+            funds["fund_name"]
+            .apply(_html.unescape)
+            .str.replace(r"S\d+;P", "S&P", regex=True)
+        )
+
     for col in ["parent_vegan_grade", "parent_vegan_flagged_pct", "parent_vegan_flagged_sum",
                 "parent_ENVA_grade", "parent_flagged_pct"]:
         if col in parents.columns:
@@ -219,7 +228,10 @@ def main():
     # ── Sidebar filters ───────────────────────────────────────────────────────
     st.sidebar.title("סינון")
     subsystems = sorted(graded["subsystem"].dropna().unique())
-    sel_sub = st.sidebar.multiselect("סוג קופה", subsystems, default=subsystems)
+    sel_sub = st.sidebar.multiselect(
+        "סוג קופה", subsystems,
+        default=[s for s in subsystems if s == "פנסיה מקיפה"],
+    )
     sel_grades = st.sidebar.multiselect(
         "דירוג טבעונות", [1, 2, 3, 4, 5], default=[1, 2, 3, 4, 5],
         format_func=lambda g: GRADE_LABELS[g],
@@ -427,11 +439,22 @@ def main():
         yaxis=dict(title="", automargin=True),
         plot_bgcolor="white",
         height=420,
-        margin=dict(l=210, r=80, t=10, b=10),
+        margin=dict(l=210, r=20, t=10, b=40),
         showlegend=False,
     )
+    fig_top.add_annotation(
+        text="✂ בר מקוצר — הערך המלא מוצג בתווית",
+        xref="paper", yref="paper",
+        x=1.0, y=-0.08,
+        xanchor="right", yanchor="top",
+        showarrow=False,
+        font=dict(size=11, color="#888"),
+        bgcolor="white",
+        bordercolor="#ddd",
+        borderwidth=1,
+        borderpad=4,
+    )
     st.plotly_chart(fig_top, use_container_width=True)
-    st.caption("✂ בר מקוצר — הערך המלא מוצג בתווית")
 
     # Company cards with logos
     for row in TOP_COMPANIES:
@@ -489,13 +512,15 @@ def main():
 
     with tab_worst:
         worst_funds = filtered[filtered["vegan_grade_int"] >= 4].sort_values(
-            "vegan_flagged_sum", ascending=False
+            "vegan_flagged_pct", ascending=False
         )
         st.caption(f"{len(worst_funds)} קופות")
         st.dataframe(fmt_table(worst_funds), use_container_width=True, hide_index=True, column_config=COL_CONFIG)
 
     with tab_best:
-        best_funds = filtered[filtered["vegan_grade_int"] == 1].sort_values("vegan_flagged_sum")
+        best_funds = filtered[filtered["vegan_grade_int"] == 1].sort_values(
+            "vegan_flagged_pct", ascending=False
+        )
         st.caption(f"{len(best_funds)} קופות — חשיפה נמוכה לפגיעה בבעלי חיים")
         st.dataframe(fmt_table(best_funds), use_container_width=True, hide_index=True, column_config=COL_CONFIG)
 
@@ -506,7 +531,7 @@ def main():
         ]
         st.caption(f"{len(view)} קופות")
         st.dataframe(
-            fmt_table(view.sort_values("vegan_grade", ascending=False)),
+            fmt_table(view.sort_values("vegan_flagged_pct", ascending=False)),
             use_container_width=True, hide_index=True, column_config=COL_CONFIG,
         )
 
