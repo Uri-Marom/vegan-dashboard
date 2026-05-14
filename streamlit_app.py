@@ -88,7 +88,6 @@ TOP_COMPANIES = [
     {
         "company": "Berkshire Hathaway",
         "ticker": "BRK",
-        "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Berkshire_Hathaway_logo.svg/200px-Berkshire_Hathaway_logo.svg.png",
         "domain": "berkshirehathaway.com",
         "category": "עור, מזון",
         "nis": 760_380_671,
@@ -105,8 +104,7 @@ TOP_COMPANIES = [
     {
         "company": "Coca-Cola",
         "ticker": "KO",
-        "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Coca-Cola_logo.svg/200px-Coca-Cola_logo.svg.png",
-        "domain": "coca-cola.com",
+        "domain": "coca-colacompany.com",
         "category": "מזון, ניסויים",
         "nis": 681_399_864,
         "desc": "קוקה-קולה משתמשת בג'לטין מדגים כחומר מייצב בחלק ממשקאותיה, ומסתמכת על ניסויים בבעלי חיים לבדיקת בטיחותם של מרכיבים.",
@@ -225,20 +223,7 @@ def main():
     graded = funds[funds["vegan_grade"].notna()].copy()
     graded["vegan_grade_int"] = graded["vegan_grade"].astype(int)
 
-    # ── Sidebar filters ───────────────────────────────────────────────────────
-    st.sidebar.title("סינון")
     subsystems = sorted(graded["subsystem"].dropna().unique())
-    sel_sub = st.sidebar.multiselect(
-        "סוג קופה", subsystems,
-        default=[s for s in subsystems if s == "פנסיה מקיפה"],
-    )
-    sel_grades = st.sidebar.multiselect(
-        "דירוג טבעונות", [1, 2, 3, 4, 5], default=[1, 2, 3, 4, 5],
-        format_func=lambda g: GRADE_LABELS[g],
-    )
-    filtered = graded[
-        graded["subsystem"].isin(sel_sub) & graded["vegan_grade_int"].isin(sel_grades)
-    ]
 
     # ── Header ────────────────────────────────────────────────────────────────
     st.markdown(
@@ -246,7 +231,7 @@ def main():
         <div style='text-align:center;padding:1rem 0 0.5rem'>
           <h1 style='color:#2c3e50;margin-bottom:0.2rem'>
             🐄 כספי הפנסיה של כולנו מממנים פגיעה בבעלי חיים.<br>
-            <span style='font-size:0.7em;color:#e74c3c'>כן, גם שלך.</span>
+            <span style='font-size:0.7em;color:#e74c3c;display:block;text-align:center'>כן, גם שלך.</span>
           </h1>
           <p style='color:#7f8c8d;font-size:1.1em;margin:0'>
             קופות פנסיה וחיסכון ישראליות — ניתוח חשיפה לחברות הפוגעות בבעלי חיים · רבעון 4, 2025
@@ -488,14 +473,25 @@ def main():
     st.markdown("<br>", unsafe_allow_html=True)
 
     # ── Fund tables ───────────────────────────────────────────────────────────
+    st.markdown("---")
+    sel_sub = st.multiselect(
+        "סוג קופה",
+        subsystems,
+        default=[s for s in subsystems if s == "פנסיה מקיפה"],
+        key="subsystem_filter",
+    )
+    filtered = graded[graded["subsystem"].isin(sel_sub)]
+
     tab_worst, tab_best, tab_all = st.tabs(
         ["🔴 קופות בעייתיות (דירוג 4–5)", "🟢 קופות מיטביות (דירוג 1)", "כל הקופות"]
     )
 
-    display_cols = [c for c in [
+    # RTL column order: most contextual info on the right, details on the left
+    display_cols_ltr = [c for c in [
         "fund_name", "parent_short_name", "subsystem", "vegan_grade",
         "vegan_flagged_pct", "vegan_flagged_sum", "top_vegan_flagged_holdings_str",
     ] if c in filtered.columns]
+    display_cols = list(reversed(display_cols_ltr))
 
     COL_CONFIG = {
         "קופה": st.column_config.TextColumn("קופה"),
