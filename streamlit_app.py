@@ -60,10 +60,19 @@ def load_data():
         if col in funds.columns:
             funds[col] = pd.to_numeric(funds[col], errors="coerce")
 
+    # DB stores values in thousands of ILS
+    for col in ["vegan_flagged_sum"]:
+        if col in funds.columns:
+            funds[col] = funds[col] * 1000
+
     for col in ["parent_vegan_grade", "parent_vegan_flagged_pct", "parent_vegan_flagged_sum",
                 "parent_ENVA_grade", "parent_flagged_pct"]:
         if col in parents.columns:
             parents[col] = pd.to_numeric(parents[col], errors="coerce")
+
+    # DB stores values in thousands of ILS
+    if "parent_vegan_flagged_sum" in parents.columns:
+        parents["parent_vegan_flagged_sum"] = parents["parent_vegan_flagged_sum"] * 1000
 
     return funds, parents
 
