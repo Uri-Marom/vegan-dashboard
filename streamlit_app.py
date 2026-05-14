@@ -319,48 +319,28 @@ def main():
     )
     st.markdown("---")
 
-    # ── Two charts ────────────────────────────────────────────────────────────
-    col_a, col_b = st.columns(2)
-
-    with col_a:
-        st.subheader("היקף ההשקעה בחברות הפוגעות בבעלי חיים לפי סוג קופה")
-        by_sub = (
-            graded.groupby("subsystem")["vegan_flagged_sum"]
-            .sum().sort_values(ascending=False).reset_index()
-        )
-        by_sub["NIS_fmt"] = by_sub["vegan_flagged_sum"].apply(fmt_nis)
-        fig1 = px.bar(
-            by_sub, x="vegan_flagged_sum", y="subsystem",
-            orientation="h", text="NIS_fmt",
-            color_discrete_sequence=[ANIMAL_RED],
-        )
-        fig1.update_layout(showlegend=False, xaxis_title="₪", yaxis_title="",
-                           plot_bgcolor="white", height=320)
-        fig1.update_traces(textposition="outside")
-        st.plotly_chart(fig1, use_container_width=True)
-
-    with col_b:
-        st.subheader("בתי ההשקעות עם החשיפה הגבוהה ביותר לפגיעה בבעלי חיים")
-        worst_parents = (
-            parents[parents["parent_vegan_flagged_sum"].notna()]
-            .sort_values("parent_vegan_flagged_sum", ascending=False)
-            .head(12)
-            .copy()
-        )
-        worst_parents["NIS_fmt"] = worst_parents["parent_vegan_flagged_sum"].apply(fmt_nis)
-        name_col = "parent_short_name" if "parent_short_name" in worst_parents.columns else "parent_company_legal_id"
-        fig2 = px.bar(
-            worst_parents, x="parent_vegan_flagged_sum", y=name_col,
-            orientation="h", text="NIS_fmt",
-            color_discrete_sequence=[ANIMAL_RED],
-        )
-        fig2.update_layout(
-            yaxis={"categoryorder": "total ascending"},
-            xaxis_title="₪", yaxis_title="",
-            plot_bgcolor="white", height=320,
-        )
-        fig2.update_traces(textposition="outside")
-        st.plotly_chart(fig2, use_container_width=True)
+    # ── Investment houses by % ────────────────────────────────────────────────
+    st.subheader("בתי ההשקעות עם שיעור החשיפה הגבוה ביותר לפגיעה בבעלי חיים")
+    name_col = "parent_short_name" if "parent_short_name" in parents.columns else "parent_company_legal_id"
+    worst_parents = (
+        parents[parents["parent_vegan_flagged_pct"].notna()]
+        .sort_values("parent_vegan_flagged_pct", ascending=False)
+        .head(12)
+        .copy()
+    )
+    worst_parents["pct_fmt"] = worst_parents["parent_vegan_flagged_pct"].apply(lambda x: f"{x:.1f}%")
+    fig2 = px.bar(
+        worst_parents, x="parent_vegan_flagged_pct", y=name_col,
+        orientation="h", text="pct_fmt",
+        color_discrete_sequence=[ANIMAL_RED],
+    )
+    fig2.update_layout(
+        yaxis={"categoryorder": "total ascending"},
+        xaxis_title="% מהתיק המכוסה", yaxis_title="",
+        plot_bgcolor="white", height=380,
+    )
+    fig2.update_traces(textposition="outside")
+    st.plotly_chart(fig2, use_container_width=True)
 
     # ── Methodology ───────────────────────────────────────────────────────────
     with st.expander("כיצד חושב המדד? על המתודולוגיה"):
@@ -385,35 +365,85 @@ def main():
     st.subheader("10 החברות הפוגעות בבעלי חיים שמושקע בהן הסכום הגבוה ביותר")
     st.caption("מחושב לפי סך הש\"ח המושקעים בכל חברה על ידי קופות הפנסיה הישראליות · רבעון 4, 2025")
 
-    top_df = pd.DataFrame(TOP_COMPANIES)
+    import plotly.graph_objects as go
+
+    top_df = pd.DataFrame(TOP_COMPANIES).sort_values("nis")
     top_df["nis_fmt"] = top_df["nis"].apply(fmt_nis)
 
-    fig_top = px.bar(
-        top_df.sort_values("nis"), x="nis", y="company",
-        orientation="h", text="nis_fmt",
-        color_discrete_sequence=[ANIMAL_RED],
+    # Cap display at ₪3B; top 2 are truncated (Teva ₪20B, Amazon ₪8.5B)
+    CAP = 3_000_000_000
+    top_df["nis_display"] = top_df["nis"].clip(upper=CAP)
+    top_df["is_truncated"] = top_df["nis"] > CAP
+    top_df["bar_color"] = top_df["is_truncated"].map({True: "#c0392b", False: ANIMAL_RED})
+    top_df["label"] = top_df.apply(
+        lambda r: f"  {r['nis_fmt']}  ✂" if r["is_truncated"] else f"  {r['nis_fmt']}",
+        axis=1,
     )
+
+    fig_top = go.Figure(go.Bar(
+        x=top_df["nis_display"],
+        y=top_df["company"],
+        orientation="h",
+        text=top_df["label"],
+        textposition="outside",
+        cliponaxis=False,
+        marker_color=top_df["bar_color"].tolist(),
+        marker_pattern_shape=top_df["is_truncated"].map({True: "/", False: ""}).tolist(),
+        marker_pattern_fgcolor="white",
+        marker_pattern_size=6,
+    ))
     fig_top.update_layout(
-        yaxis={"categoryorder": "total ascending"},
-        xaxis_title="₪", yaxis_title="",
-        plot_bgcolor="white", height=360,
+        xaxis=dict(range=[0, CAP * 1.55], title="₪", tickformat=",.0f"),
+        yaxis=dict(title=""),
+        plot_bgcolor="white",
+        height=400,
+        margin=dict(l=10, r=10, t=10, b=30),
     )
-    fig_top.update_traces(textposition="outside")
+    fig_top.add_annotation(
+        text="✂ הבר מקוצר — הערך המלא מוצג בתווית",
+        xref="paper", yref="paper", x=1, y=-0.06,
+        showarrow=False, font=dict(size=11, color="#888"), xanchor="right",
+    )
     st.plotly_chart(fig_top, use_container_width=True)
 
+    # Company cards with logos
+    LOGOS = {
+        "TEVA":  "https://logo.clearbit.com/teva.com",
+        "AMZN":  "https://logo.clearbit.com/amazon.com",
+        "LLY":   "https://logo.clearbit.com/lilly.com",
+        "ABBV":  "https://logo.clearbit.com/abbvie.com",
+        "WMT":   "https://logo.clearbit.com/walmart.com",
+        "HD":    "https://logo.clearbit.com/homedepot.com",
+        "BABA":  "https://logo.clearbit.com/alibaba.com",
+        "BRK":   "https://logo.clearbit.com/berkshirehathaway.com",
+        "HON":   "https://logo.clearbit.com/honeywell.com",
+        "KO":    "https://logo.clearbit.com/coca-cola.com",
+    }
+
     for row in TOP_COMPANIES:
-        with st.container():
-            c1, c2 = st.columns([1, 5])
-            with c1:
-                st.metric(row["company"], fmt_nis(row["nis"]))
-                st.caption(row["category"])
-            with c2:
-                st.markdown(
-                    f"<div style='padding:0.6rem 0 0.6rem 1rem;border-left:3px solid {ANIMAL_RED};"
-                    f"color:#555;font-size:0.95rem'>{row['desc']}</div>",
-                    unsafe_allow_html=True,
-                )
-        st.divider()
+        logo_url = LOGOS.get(row["ticker"], "")
+        logo_html = (
+            f"<img src='{logo_url}' style='width:48px;height:48px;object-fit:contain;"
+            f"border-radius:8px;background:#f8f8f8;padding:4px' onerror=\"this.style.display='none'\">"
+            if logo_url else ""
+        )
+        st.markdown(
+            f"""
+            <div style='display:flex;align-items:center;gap:1.2rem;padding:0.8rem 0;
+                        border-bottom:1px solid #f0f0f0'>
+              <div style='flex-shrink:0'>{logo_html}</div>
+              <div style='flex-shrink:0;min-width:130px'>
+                <div style='font-weight:700;font-size:1rem'>{row['company']}</div>
+                <div style='color:{ANIMAL_RED};font-size:1.1rem;font-weight:800'>{fmt_nis(row['nis'])}</div>
+                <div style='color:#999;font-size:0.78rem'>{row['category']}</div>
+              </div>
+              <div style='color:#555;font-size:0.93rem;border-right:3px solid {ANIMAL_RED};
+                          padding-right:1rem;flex:1'>{row['desc']}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    st.markdown("<br>", unsafe_allow_html=True)
 
     # ── Fund tables ───────────────────────────────────────────────────────────
     tab_worst, tab_best, tab_all = st.tabs(
