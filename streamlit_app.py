@@ -16,17 +16,17 @@ GRADE_COLORS = {1: "#2ecc71", 2: "#a8e063", 3: "#f5a623", 4: "#e67e22", 5: "#e74
 GRADE_LABELS = {1: "1 – מיטבי", 2: "2", 3: "3 – בינוני", 4: "4", 5: "5 – הגרוע ביותר"}
 ANIMAL_RED = "#e74c3c"
 
-# Coca-Cola SVG served from static/ folder; all others from clearbit
+# All logos served from static/ (run download_logos.py once to fetch them)
 LOGO_URLS = {
-    "TEVA": "https://logo.clearbit.com/tevapharm.com",
-    "AMZN": "https://logo.clearbit.com/amazon.com",
-    "LLY":  "https://logo.clearbit.com/lilly.com",
-    "ABBV": "https://logo.clearbit.com/abbvie.com",
-    "WMT":  "https://logo.clearbit.com/walmart.com",
-    "HD":   "https://logo.clearbit.com/homedepot.com",
-    "BABA": "https://logo.clearbit.com/alibaba.com",
-    "BRK":  "https://logo.clearbit.com/berkshirehathaway.com",
-    "HON":  "https://logo.clearbit.com/honeywell.com",
+    "TEVA": "app/static/teva.png",
+    "AMZN": "app/static/amazon.png",
+    "LLY":  "app/static/eli-lilly.png",
+    "ABBV": "app/static/abbvie.png",
+    "WMT":  "app/static/walmart.png",
+    "HD":   "app/static/home-depot.png",
+    "BABA": "app/static/alibaba.png",
+    "BRK":  "app/static/berkshire.png",
+    "HON":  "app/static/honeywell.png",
     "KO":   "app/static/coca-cola.svg",
 }
 
