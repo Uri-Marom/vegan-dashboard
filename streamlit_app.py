@@ -286,6 +286,38 @@ def main():
     VF_MEMBERS    = 6_500
     VF_FOLLOWERS  = 400_000
 
+    # ── Impact equivalencies ─────────────────────────────────────────────────
+    def _fmt_big(val):
+        if val >= 1e12: return f"{val/1e12:.1f}T"
+        if val >= 1e9:  return f"{val/1e9:.1f}B"
+        if val >= 1e6:  return f"{val/1e6:.1f}M"
+        if val >= 1e3:  return f"{val/1e3:.0f}K"
+        return f"{int(val):,}"
+
+    chickens     = total_nis * 0.057
+    burgers_day  = total_nis * 0.005
+    water_liters = total_nis * 1700
+    co2_kg       = total_nis * 6
+
+    st.markdown("**במונחים שאנחנו מבינים, זה שווה ערך ל:**")
+    e1, e2, e3, e4 = st.columns(4)
+    e1.metric(
+        "🐔 עופות ממומנים / שנה", _fmt_big(chickens),
+        help="מבוסס על הכנסות תעשיית החקלאות העולמית (~750B$) ו-80 מיליארד בעלי חיים שנשחטים מדי שנה.",
+    )
+    e2.metric(
+        "🍔 המבורגרים בקר / יום", _fmt_big(burgers_day),
+        help="מבוסס על שרשרת אספקת הבקר העולמית וצריכה של ~340 מיליון טון בקר בשנה.",
+    )
+    e3.metric(
+        "💧 ליטרים של מים", _fmt_big(water_liters),
+        help=f"מבוסס על ~15,400 ל׳ לק״ג בקר (UNESCO/WWF). שווה ערך ל-{_fmt_big(water_liters / 2_500_000)} בריכות אולימפיות.",
+    )
+    e4.metric(
+        "🌍 ק״ג מקביל CO₂", _fmt_big(co2_kg),
+        help=f"מבוסס על נתוני FAO (~7.1B טון CO₂ בשנה מבע״ח). שווה ל-{_fmt_big(co2_kg / 4_600)} שנות נסיעה ברכב ממוצע.",
+    )
+
     st.markdown("---")
     st.subheader("כוח השינוי של קהילת ויגן פרנדלי")
     st.markdown(
