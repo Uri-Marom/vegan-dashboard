@@ -305,18 +305,22 @@ def main():
         "🐔 עופות ממומנים / שנה", _fmt_big(chickens),
         help="מבוסס על הכנסות תעשיית החקלאות העולמית (~750B$) ו-80 מיליארד בעלי חיים שנשחטים מדי שנה.",
     )
+    e1.caption(f"לחוסך הישראלי הממוצע: {_fmt_big(chickens / ISRAELI_SAVERS)} עופות/שנה")
     e2.metric(
         "🍔 המבורגרים בקר / יום", _fmt_big(burgers_day),
         help="מבוסס על שרשרת אספקת הבקר העולמית וצריכה של ~340 מיליון טון בקר בשנה.",
     )
+    e2.caption(f"לחוסך הישראלי הממוצע: {_fmt_big(burgers_day / ISRAELI_SAVERS)} המבורגרים/יום")
     e3.metric(
         "💧 ליטרים של מים", _fmt_big(water_liters),
         help=f"מבוסס על ~15,400 ל׳ לק״ג בקר (UNESCO/WWF). שווה ערך ל-{_fmt_big(water_liters / 2_500_000)} בריכות אולימפיות.",
     )
+    e3.caption(f"לחוסך הישראלי הממוצע: {_fmt_big(water_liters / ISRAELI_SAVERS)} ליטרים")
     e4.metric(
         "🌍 ק״ג מקביל CO₂", _fmt_big(co2_kg),
         help=f"מבוסס על נתוני FAO (~7.1B טון CO₂ בשנה מבע״ח). שווה ל-{_fmt_big(co2_kg / 4_600)} שנות נסיעה ברכב ממוצע.",
     )
+    e4.caption(f"לחוסך הישראלי הממוצע: {_fmt_big(co2_kg / ISRAELI_SAVERS)} ק״ג CO₂")
 
     st.markdown("---")
     st.subheader("כוח השינוי של קהילת ויגן פרנדלי")
@@ -340,6 +344,10 @@ def main():
     def _impact_card(group_name, n_people, color):
         cur   = n_people * current_per_person
         saved = n_people * saving_per_person
+        chick = _fmt_big(saved * 0.057)
+        burg  = _fmt_big(saved * 0.005)
+        water = _fmt_big(saved * 1700)
+        co2   = _fmt_big(saved * 6)
         return f"""
         <div style='background:{color};border-radius:14px;padding:1.5rem;color:white;text-align:center'>
           <div style='font-size:1.05rem;font-weight:600;margin-bottom:0.8rem'>{group_name}</div>
@@ -353,6 +361,12 @@ def main():
               <div style='font-size:0.8rem;opacity:0.85'>הפחתה פוטנציאלית</div>
               <div style='font-size:1.8rem;font-weight:800'>{fmt_nis(saved)}</div>
               <div style='font-size:0.75rem;opacity:0.75'>יוצאים מהניצול</div>
+              <div style='margin-top:0.6rem;font-size:0.78rem;opacity:0.9;line-height:1.6'>
+                🐔 {chick} עופות/שנה<br>
+                🍔 {burg} המבורגרים/יום<br>
+                💧 {water} ליטר מים<br>
+                🌍 {co2} ק״ג CO₂
+              </div>
             </div>
           </div>
         </div>
