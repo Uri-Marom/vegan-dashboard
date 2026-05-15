@@ -25,7 +25,7 @@ LOGO_URLS = {
     "WMT":  "https://www.google.com/s2/favicons?domain=walmart.com&sz=64",
     "HD":   "https://www.google.com/s2/favicons?domain=homedepot.com&sz=64",
     "BABA": "https://www.google.com/s2/favicons?domain=alibaba.com&sz=64",
-    "BRK":  "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Berkshire_Hathaway_logo.svg/200px-Berkshire_Hathaway_logo.svg.png",
+    "BRK":  "app/static/BH-logo.png",
     "HON":  "https://www.google.com/s2/favicons?domain=honeywell.com&sz=64",
     "KO":   "app/static/coca-cola.svg",
 }
