@@ -167,6 +167,7 @@ def load_data():
             funds["fund_name"]
             .apply(_html.unescape)
             .str.replace(r"[Ss]\d+;[Pp]", "S&P", regex=True)
+            .str.replace(r"S&P(\d)", r"S&P \1", regex=True)
         )
 
     for col in ["parent_vegan_grade", "parent_vegan_flagged_pct", "parent_vegan_flagged_sum",
