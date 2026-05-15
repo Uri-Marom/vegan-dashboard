@@ -16,17 +16,17 @@ GRADE_COLORS = {1: "#2ecc71", 2: "#a8e063", 3: "#f5a623", 4: "#e67e22", 5: "#e74
 GRADE_LABELS = {1: "1 – מיטבי", 2: "2", 3: "3 – בינוני", 4: "4", 5: "5 – הגרוע ביותר"}
 ANIMAL_RED = "#e74c3c"
 
-# All logos served from static/ (run download_logos.py once to fetch them)
+# Logos: Google favicon service for most; Wikimedia for Berkshire; static file for Coca-Cola
 LOGO_URLS = {
-    "TEVA": "app/static/teva.png",
-    "AMZN": "app/static/amazon.png",
-    "LLY":  "app/static/eli-lilly.png",
-    "ABBV": "app/static/abbvie.png",
-    "WMT":  "app/static/walmart.png",
-    "HD":   "app/static/home-depot.png",
-    "BABA": "app/static/alibaba.png",
-    "BRK":  "app/static/berkshire.png",
-    "HON":  "app/static/honeywell.png",
+    "TEVA": "https://www.google.com/s2/favicons?domain=tevapharm.com&sz=64",
+    "AMZN": "https://www.google.com/s2/favicons?domain=amazon.com&sz=64",
+    "LLY":  "https://www.google.com/s2/favicons?domain=lilly.com&sz=64",
+    "ABBV": "https://www.google.com/s2/favicons?domain=abbvie.com&sz=64",
+    "WMT":  "https://www.google.com/s2/favicons?domain=walmart.com&sz=64",
+    "HD":   "https://www.google.com/s2/favicons?domain=homedepot.com&sz=64",
+    "BABA": "https://www.google.com/s2/favicons?domain=alibaba.com&sz=64",
+    "BRK":  "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Berkshire_Hathaway_logo.svg/200px-Berkshire_Hathaway_logo.svg.png",
+    "HON":  "https://www.google.com/s2/favicons?domain=honeywell.com&sz=64",
     "KO":   "app/static/coca-cola.svg",
 }
 
