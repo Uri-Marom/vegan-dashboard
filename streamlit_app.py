@@ -351,28 +351,51 @@ def main():
     def _impact_card(group_name, n_people, color):
         cur   = n_people * current_per_person
         saved = n_people * saving_per_person
-        chick = _fmt_big(saved * 0.057 * MEAT_PCT)
-        burg  = _fmt_big(saved * 0.005 * MEAT_PCT)
-        water = _fmt_big(saved * 1700  * LIVESTOCK_PCT)
-        co2   = _fmt_big(saved * 6     * LIVESTOCK_PCT)
+
+        # Community (annual for animals; daily for water/CO₂ as requested)
+        chick_c   = _fmt_big(saved * 0.057 * MEAT_PCT)
+        burg_c    = _fmt_big(saved * 0.005 * MEAT_PCT * 365)
+        water_c   = _fmt_big(saved * 1700  * LIVESTOCK_PCT / 365)
+        co2_km_c  = _fmt_big(saved * 6     * LIVESTOCK_PCT / 0.2 / 365)
+
+        # Per-person (same units)
+        chick_pp  = _fmt_big(saving_per_person * 0.057 * MEAT_PCT)
+        burg_pp   = _fmt_big(saving_per_person * 0.005 * MEAT_PCT * 365)
+        water_pp  = _fmt_big(saving_per_person * 1700  * LIVESTOCK_PCT / 365)
+        co2_km_pp = _fmt_big(saving_per_person * 6     * LIVESTOCK_PCT / 0.2 / 365)
+
         return f"""
-        <div style='background:{color};border-radius:14px;padding:1.5rem;color:white;text-align:center'>
-          <div style='font-size:1.05rem;font-weight:600;margin-bottom:0.8rem'>{group_name}</div>
-          <div style='display:flex;justify-content:space-around;gap:1rem;flex-wrap:wrap'>
-            <div>
-              <div style='font-size:0.8rem;opacity:0.85'>מצב נוכחי</div>
-              <div style='font-size:1.6rem;font-weight:800'>{fmt_nis(cur)}</div>
-              <div style='font-size:0.75rem;opacity:0.75'>מושקעים בחברות מנצלות</div>
+        <div style='background:{color};border-radius:14px;padding:1.5rem;color:white'>
+          <div style='text-align:center;font-size:1.1rem;font-weight:700;margin-bottom:0.3rem'>{group_name}</div>
+          <div style='text-align:center;font-size:0.8rem;opacity:0.75;margin-bottom:1rem'>
+            מצב נוכחי: <strong>{fmt_nis(cur)}</strong> מושקעים בחברות מנצלות &nbsp;·&nbsp;
+            הפחתה פוטנציאלית: <strong>{fmt_nis(saved)}</strong>
+          </div>
+          <div style='font-size:0.82rem;font-weight:700;text-align:center;opacity:0.9;margin-bottom:0.7rem'>
+            ✨ מה הפחתה זו אומרת בפועל?
+          </div>
+          <div style='display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem'>
+            <div style='background:rgba(255,255,255,0.18);border-radius:10px;padding:1rem;text-align:center'>
+              <div style='font-size:0.72rem;opacity:0.85;margin-bottom:0.5rem;font-weight:600'>💰 בשקלים</div>
+              <div style='font-size:1.9rem;font-weight:800;line-height:1.1'>{fmt_nis(saved)}</div>
+              <div style='font-size:0.68rem;opacity:0.7;margin-top:0.3rem'>יוצאים מהניצול</div>
             </div>
-            <div style='background:rgba(255,255,255,0.15);border-radius:10px;padding:0.5rem 1.5rem'>
-              <div style='font-size:0.8rem;opacity:0.85'>הפחתה פוטנציאלית</div>
-              <div style='font-size:1.8rem;font-weight:800'>{fmt_nis(saved)}</div>
-              <div style='font-size:0.75rem;opacity:0.75'>יוצאים מהניצול</div>
-              <div style='margin-top:0.6rem;font-size:0.78rem;opacity:0.9;line-height:1.6'>
-                🐔 {chick} עופות/שנה<br>
-                🍔 {burg} המבורגרים/יום<br>
-                💧 {water} ליטר מים<br>
-                🌍 {co2} ק״ג CO₂
+            <div style='background:rgba(255,255,255,0.18);border-radius:10px;padding:1rem'>
+              <div style='font-size:0.72rem;opacity:0.85;margin-bottom:0.5rem;font-weight:600;text-align:center'>🌍 כקהילה</div>
+              <div style='font-size:0.83rem;line-height:2'>
+                🐔 {chick_c} עופות/שנה<br>
+                🍔 {burg_c} המבורגרים/שנה<br>
+                💧 {water_c} ל׳ ביום<br>
+                🚗 {co2_km_c} ק״מ ביום
+              </div>
+            </div>
+            <div style='background:rgba(255,255,255,0.18);border-radius:10px;padding:1rem'>
+              <div style='font-size:0.72rem;opacity:0.85;margin-bottom:0.5rem;font-weight:600;text-align:center'>👤 לאדם</div>
+              <div style='font-size:0.83rem;line-height:2'>
+                🐔 {chick_pp} עופות/שנה<br>
+                🍔 {burg_pp} המבורגרים/שנה<br>
+                💧 {water_pp} ל׳ ביום<br>
+                🚗 {co2_km_pp} ק״מ ביום
               </div>
             </div>
           </div>
