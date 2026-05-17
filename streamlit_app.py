@@ -9,6 +9,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+import streamlit.components.v1 as components
 
 SHEET_ID = "13TBGxhTo970evb5VCZ-hMDJzGKqY7SlDO5bV74rlSDo"
 
@@ -339,21 +340,96 @@ def main():
 
     st.markdown("---")
     st.subheader("כוח השינוי של קהילת ויגן פרנדלי")
-    st.markdown("הזיזו את המחוון וראו כמה כוח יש לקהילה שלכם.")
+    st.markdown(
+        "מה יקרה אם נזיז את כספי הפנסיה שלנו לקרנות שמזיקות פחות לבעלי חיים?  \n"
+        "כשאנשים פועלים יחד — ההשפעה מתרבה."
+    )
 
     # Fixed to Israeli average total savings (pension + gemel + hishtalmut)
     ISRAELI_AVG_SAVINGS = 400_000
     current_per_person = ISRAELI_AVG_SAVINGS * CURRENT_EXPLOIT_PCT / 100
     saving_per_person  = current_per_person - ISRAELI_AVG_SAVINGS * GRADE1_EXPLOIT_PCT / 100
 
+    # Animated people counter
+    _COUNTER_HTML = """
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: transparent; direction: rtl; }
+      #wrap { text-align: center; padding: 0.8rem 1rem 0.2rem; }
+      #num  { font-size: 3.2rem; font-weight: 800; color: #3498db; line-height: 1; transition: color 0.5s; }
+      #lbl  { font-size: 0.95rem; font-weight: 600; color: #3498db; height: 1.4rem; margin: 0.3rem 0 0.6rem; transition: color 0.5s; }
+      #track { margin: 0 auto; width: 85%; height: 10px; background: #eee; border-radius: 5px; direction: ltr; }
+      #fill  { height: 100%; width: 0%; background: #3498db; border-radius: 5px; transition: background 0.5s; }
+      #marks { display: flex; justify-content: space-between; width: 85%; margin: 0.25rem auto 0; font-size: 0.68rem; direction: ltr; }
+      #btn   { margin-top: 0.5rem; padding: 3px 16px; border: 1px solid #ddd; background: white;
+               border-radius: 20px; cursor: pointer; font-size: 0.8rem; color: #777; }
+    </style>
+    <div id="wrap">
+      <div id="num">1</div>
+      <div id="lbl">אני 👤</div>
+      <div id="track"><div id="fill"></div></div>
+      <div id="marks">
+        <span>1</span>
+        <span style="color:#8e44ad">6,500 — ויגן אקטיב</span>
+        <span style="color:#e67e22">400,000 — עוקבים</span>
+      </div>
+      <button id="btn" onclick="run()">▶ שוב</button>
+    </div>
+    <script>
+    const eNum = document.getElementById('num');
+    const eLbl = document.getElementById('lbl');
+    const eFill = document.getElementById('fill');
+    const MAX = 400000;
+
+    function fmtNum(n) {
+      n = Math.round(n);
+      return n.toLocaleString('he-IL');
+    }
+    function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+    function run() {
+      eNum.textContent = '1'; eLbl.textContent = 'אני 👤';
+      eNum.style.color = eLbl.style.color = '#3498db';
+      eFill.style.background = '#3498db'; eFill.style.width = '0.003%';
+
+      const phases = [
+        { from: 1,    to: 6500,  dur: 2200, pause: 1100, color: '#8e44ad', label: 'ויגן אקטיב 🌱' },
+        { from: 6500, to: MAX,   dur: 2600, pause: 0,    color: '#e67e22', label: 'עוקבי ויגן פרנדלי 🌍' },
+      ];
+
+      let i = 0;
+      function next() {
+        if (i >= phases.length) return;
+        const ph = phases[i++];
+        const t0 = performance.now();
+        (function step(t) {
+          const p = Math.min((t - t0) / ph.dur, 1);
+          const v = ph.from + (ph.to - ph.from) * ease(p);
+          eNum.textContent = fmtNum(v);
+          eFill.style.width = (v / MAX * 100) + '%';
+          if (p < 1) { requestAnimationFrame(step); }
+          else {
+            eNum.textContent = fmtNum(ph.to);
+            eFill.style.width = (ph.to / MAX * 100) + '%';
+            eFill.style.background = ph.color;
+            eNum.style.color = eLbl.style.color = ph.color;
+            eLbl.textContent = ph.label;
+            setTimeout(next, ph.pause);
+          }
+        })(t0);
+      }
+      setTimeout(next, 350);
+    }
+    run();
+    </script>
+    """
+    components.html(_COUNTER_HTML, height=165)
+
     _CARD_STYLES = {
         1:           ("#3498db", "#f0f7ff", "👤", "אני", "חוסך ממוצע"),
         VF_MEMBERS:  ("#8e44ad", "#f8f0ff", "🌱", "6,500 ויגן אקטיב", "חברי הקהילה הפעילה"),
         VF_FOLLOWERS:("#e67e22", "#fff8f0", "🌍", "400,000 עוקבים", "קהילת ויגן פרנדלי"),
     }
-
-    # Columns: reversed order so RTL renders person LEFT → 6500 MIDDLE → 400K RIGHT
-    c_400k, arr2, c_6500, arr1, c_me = st.columns([4, 0.6, 4, 0.6, 4])
 
     def _scale_card(n_people):
         saved = n_people * saving_per_person
@@ -380,7 +456,9 @@ def main():
         </div>
         """
 
-    _arrow = "<div style='text-align:center;font-size:2rem;padding-top:5rem;color:#ccc'>→</div>"
+    # RTL column order: c_me first in code → renders rightmost; c_400k last → renders leftmost
+    _arrow = "<div style='text-align:center;font-size:2rem;padding-top:5rem;color:#ccc'>←</div>"
+    c_me, arr1, c_6500, arr2, c_400k = st.columns([4, 0.6, 4, 0.6, 4])
 
     with c_me:
         st.markdown(_scale_card(1), unsafe_allow_html=True)
