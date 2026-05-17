@@ -294,6 +294,12 @@ def main():
         if val >= 1e3:  return f"{val/1e3:.0f}K"
         return f"{int(val):,}"
 
+    def _fmt_water_day(liters_per_day):
+        """Convert liters/day to human-scale: bathtubs (<2.5M L) or Olympic pools (≥2.5M L)."""
+        if liters_per_day >= 2_500_000:
+            return f"{_fmt_big(liters_per_day / 2_500_000)} בריכות אולימפיות/יום"
+        return f"{_fmt_big(liters_per_day / 150)} אמבטיות/יום"
+
     # Category fractions from 2025Q4 holdings data joined with CFI Animal Usage:
     #   Animal Testing 60.6%, Meat/Dairy/Eggs 14.4%, Leather/Hide/Fur 13.1%, other 12%
     # All equivalencies apply to Meat/Dairy/Eggs only (14.4%).
@@ -321,7 +327,7 @@ def main():
         "💧 ליטרים של מים / שנה", _fmt_big(water_liters),
         help=f"14.4% בחברות מזון מן החי — מבוסס על ~15,400 ל׳ לק״ג בקר (UNESCO/WWF, מחזור חיים מלא), P/S 1.0x. שווה ל-{_fmt_big(water_liters / 2_500_000)} בריכות אולימפיות.",
     )
-    e3.caption(f"לחוסך הממוצע: {_fmt_big(water_liters / ISRAELI_SAVERS / 365)} ליטרים/יום")
+    e3.caption(f"לחוסך הממוצע: {_fmt_water_day(water_liters / ISRAELI_SAVERS / 365)}")
     e4.metric(
         "🌍 ק״ג מקביל CO₂ / שנה", _fmt_big(co2_kg),
         help=f"14.4% בחברות מזון מן החי — מבוסס על נתוני FAO (~7.1B טון CO₂/שנה מבע״ח), P/S 1.0x. שווה ל-{_fmt_big(co2_kg / 4_600)} שנות נסיעה ברכב ממוצע.",
@@ -354,13 +360,13 @@ def main():
         # Community: animals/year; burgers/day; water L/day; CO₂ km/day. P/S 1.0x rates.
         chick_c   = _fmt_big(saved * 0.0285 * MEAT_PCT)
         burg_c    = _fmt_big(saved * 0.0025 * MEAT_PCT)
-        water_c   = _fmt_big(saved * 850    * MEAT_PCT / 365)
+        water_c   = _fmt_water_day(saved * 850    * MEAT_PCT / 365)
         co2_km_c  = _fmt_big(saved * 3      * MEAT_PCT / 0.2 / 365)
 
         # Per-person (same units)
         chick_pp  = _fmt_big(saving_per_person * 0.0285 * MEAT_PCT)
         burg_pp   = _fmt_big(saving_per_person * 0.0025 * MEAT_PCT)
-        water_pp  = _fmt_big(saving_per_person * 850    * MEAT_PCT / 365)
+        water_pp  = _fmt_water_day(saving_per_person * 850    * MEAT_PCT / 365)
         co2_km_pp = _fmt_big(saving_per_person * 3      * MEAT_PCT / 0.2 / 365)
 
         return f"""
@@ -384,7 +390,7 @@ def main():
               <div style='font-size:0.83rem;line-height:2'>
                 🐔 {chick_c} עופות/שנה<br>
                 🍔 {burg_c} המבורגרים/יום<br>
-                💧 {water_c} ל׳ ביום<br>
+                💧 {water_c}<br>
                 🚗 {co2_km_c} ק״מ ביום
               </div>
             </div>
@@ -393,7 +399,7 @@ def main():
               <div style='font-size:0.83rem;line-height:2'>
                 🐔 {chick_pp} עופות/שנה<br>
                 🍔 {burg_pp} המבורגרים/יום<br>
-                💧 {water_pp} ל׳ ביום<br>
+                💧 {water_pp}<br>
                 🚗 {co2_km_pp} ק״מ ביום
               </div>
             </div>
