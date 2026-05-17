@@ -336,9 +336,7 @@ def main():
 
     st.markdown("---")
     st.subheader("כוח השינוי של קהילת ויגן פרנדלי")
-    st.markdown(
-        "מה יקרה אם חברי וחברות ויגן פרנדלי יגלו איפה הכסף שלהם מושקע?"
-    )
+    st.markdown("כשאנשים פועלים יחד — ההשפעה מתרבה. הזיזו את המחוון וראו כמה כוח יש לקהילה שלכם.")
 
     avg_savings = st.slider(
         "חיסכון ממוצע לאדם בכל הקופות (פנסיה, גמל, השתלמות, ביטוח)",
@@ -353,74 +351,70 @@ def main():
     clean_per_person   = avg_savings * GRADE1_EXPLOIT_PCT  / 100
     saving_per_person  = current_per_person - clean_per_person
 
-    def _impact_card(group_name, n_people, color):
-        cur   = n_people * current_per_person
+    def _scale_card(n_people, emoji, title, subtitle, border_color, bg_color, badge_label=""):
         saved = n_people * saving_per_person
-
-        # Community: animals/year; burgers/day; water L/day; CO₂ km/day. P/S 1.0x rates.
-        chick_c   = _fmt_big(saved * 0.0285 * MEAT_PCT)
-        burg_c    = _fmt_big(saved * 0.0025 * MEAT_PCT)
-        water_c   = _fmt_water_day(saved * 850    * MEAT_PCT / 365)
-        co2_km_c  = _fmt_big(saved * 3      * MEAT_PCT / 0.2 / 365)
-
-        # Per-person (same units)
-        chick_pp  = _fmt_big(saving_per_person * 0.0285 * MEAT_PCT)
-        burg_pp   = _fmt_big(saving_per_person * 0.0025 * MEAT_PCT)
-        water_pp  = _fmt_water_day(saving_per_person * 850    * MEAT_PCT / 365)
-        co2_km_pp = _fmt_big(saving_per_person * 3      * MEAT_PCT / 0.2 / 365)
-
+        chick = _fmt_big(saved * 0.0285 * MEAT_PCT)
+        burg  = _fmt_big(saved * 0.0025 * MEAT_PCT)
+        water = _fmt_water_day(saved * 850 * MEAT_PCT / 365)
+        co2   = _fmt_big(saved * 3 * MEAT_PCT / 0.2 / 365)
+        badge_html = (
+            f"<div style='font-size:0.7rem;background:{border_color};color:white;"
+            f"border-radius:20px;padding:2px 12px;display:inline-block;margin-bottom:0.6rem'>"
+            f"{badge_label}</div>"
+            if badge_label else "<div style='height:1.6rem'></div>"
+        )
         return f"""
-        <div style='background:{color};border-radius:14px;padding:1.5rem;color:white'>
-          <div style='text-align:center;font-size:1.1rem;font-weight:700;margin-bottom:0.3rem'>{group_name}</div>
-          <div style='text-align:center;font-size:0.8rem;opacity:0.75;margin-bottom:1rem'>
-            מצב נוכחי: <strong>{fmt_nis(cur)}</strong> מושקעים בחברות מנצלות &nbsp;·&nbsp;
-            הפחתה פוטנציאלית: <strong>{fmt_nis(saved)}</strong>
-          </div>
-          <div style='font-size:0.82rem;font-weight:700;text-align:center;opacity:0.9;margin-bottom:0.7rem'>
-            ✨ מה הפחתה זו אומרת בפועל?
-          </div>
-          <div style='display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem'>
-            <div style='background:rgba(255,255,255,0.18);border-radius:10px;padding:1rem;text-align:center'>
-              <div style='font-size:0.72rem;opacity:0.85;margin-bottom:0.5rem;font-weight:600'>💰 בשקלים</div>
-              <div style='font-size:1.9rem;font-weight:800;line-height:1.1'>{fmt_nis(saved)}</div>
-              <div style='font-size:0.68rem;opacity:0.7;margin-top:0.3rem'>יוצאים מהניצול</div>
-            </div>
-            <div style='background:rgba(255,255,255,0.18);border-radius:10px;padding:1rem'>
-              <div style='font-size:0.72rem;opacity:0.85;margin-bottom:0.5rem;font-weight:600;text-align:center'>🌍 סה״כ הקהילה</div>
-              <div style='font-size:0.83rem;line-height:2'>
-                🐔 {chick_c} עופות/שנה<br>
-                🍔 {burg_c} המבורגרים/יום<br>
-                💧 {water_c}<br>
-                🚗 {co2_km_c} ק״מ ביום
-              </div>
-            </div>
-            <div style='background:rgba(255,255,255,0.18);border-radius:10px;padding:1rem'>
-              <div style='font-size:0.72rem;opacity:0.85;margin-bottom:0.5rem;font-weight:600;text-align:center'>👤 לאדם אחד</div>
-              <div style='font-size:0.83rem;line-height:2'>
-                🐔 {chick_pp} עופות/שנה<br>
-                🍔 {burg_pp} המבורגרים/יום<br>
-                💧 {water_pp}<br>
-                🚗 {co2_km_pp} ק״מ ביום
-              </div>
-            </div>
+        <div style='background:{bg_color};border:2px solid {border_color};border-radius:16px;
+                    padding:1.4rem 1rem;text-align:center;height:100%'>
+          {badge_html}
+          <div style='font-size:2.4rem;line-height:1'>{emoji}</div>
+          <div style='font-weight:800;font-size:1rem;margin:0.4rem 0 0.1rem'>{title}</div>
+          <div style='font-size:0.75rem;color:#777;margin-bottom:0.9rem'>{subtitle}</div>
+          <div style='font-size:2rem;font-weight:800;color:{border_color};
+                      margin-bottom:0.9rem;line-height:1.1'>{fmt_nis(saved)}</div>
+          <div style='border-top:1px solid rgba(0,0,0,0.1);padding-top:0.75rem;
+                      font-size:0.82rem;line-height:2.1;text-align:right;padding-right:0.3rem'>
+            🐔 {chick} עופות/שנה<br>
+            🍔 {burg} המבורגרים/יום<br>
+            💧 {water}<br>
+            🚗 {co2} ק״מ ביום
           </div>
         </div>
         """
 
-    st.markdown(
-        _impact_card("6,500 חברי ויגן אקטיב", VF_MEMBERS, "#8e44ad"),
-        unsafe_allow_html=True,
-    )
-    st.markdown("<div style='height:0.8rem'></div>", unsafe_allow_html=True)
-    st.markdown(
-        _impact_card("400,000 עוקבי ויגן פרנדלי", VF_FOLLOWERS, "#2980b9"),
-        unsafe_allow_html=True,
-    )
+    c1, arr1, c2, arr2, c3 = st.columns([4, 0.6, 4, 0.6, 4])
+    with c1:
+        st.markdown(
+            _scale_card(1, "👤", "אני", "חוסך ממוצע", "#3498db", "#f0f7ff"),
+            unsafe_allow_html=True,
+        )
+    with arr1:
+        st.markdown(
+            "<div style='text-align:center;font-size:2rem;padding-top:5rem;color:#ccc'>→</div>",
+            unsafe_allow_html=True,
+        )
+    with c2:
+        st.markdown(
+            _scale_card(VF_MEMBERS, "🌱", "6,500 ויגן אקטיב", "חברי הקהילה הפעילה",
+                        "#8e44ad", "#f8f0ff", "× 6,500"),
+            unsafe_allow_html=True,
+        )
+    with arr2:
+        st.markdown(
+            "<div style='text-align:center;font-size:2rem;padding-top:5rem;color:#ccc'>→</div>",
+            unsafe_allow_html=True,
+        )
+    with c3:
+        st.markdown(
+            _scale_card(VF_FOLLOWERS, "🌍", "400,000 עוקבים", "קהילת ויגן פרנדלי",
+                        "#e67e22", "#fff8f0", "× 400,000"),
+            unsafe_allow_html=True,
+        )
 
     st.markdown(
-        f"<p style='color:#888;font-size:0.82rem;margin-top:0.6rem;text-align:right'>"
+        f"<p style='color:#888;font-size:0.82rem;margin-top:0.8rem;text-align:right'>"
         f"הנחות: שיעור ניצול ממוצע היום — {CURRENT_EXPLOIT_PCT}% · "
-        f"שיעור ניצול אחרי מעבר לקופה נקייה — {GRADE1_EXPLOIT_PCT:.2f}% (מחצית מהממוצע הנוכחי) · "
+        f"שיעור ניצול לאחר מעבר לקופה נקייה — {GRADE1_EXPLOIT_PCT:.2f}% · "
         f"חיסכון ממוצע לאדם — {fmt_nis(avg_savings)}</p>",
         unsafe_allow_html=True,
     )
