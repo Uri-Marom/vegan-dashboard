@@ -227,6 +227,9 @@ def main():
         div[data-testid="metric-container"] > div { text-align: right; }
         .stTabs [data-baseweb="tab-list"] { justify-content: flex-end; }
         input[type="text"] { direction: rtl; text-align: right; }
+        /* Force sliders to remain left-to-right */
+        div[data-baseweb="slider"] { direction: ltr; }
+        div[data-testid="stSlider"] { direction: ltr; }
         </style>
         """,
         unsafe_allow_html=True,
@@ -336,37 +339,32 @@ def main():
 
     st.markdown("---")
     st.subheader("כוח השינוי של קהילת ויגן פרנדלי")
-    st.markdown("כשאנשים פועלים יחד — ההשפעה מתרבה. הזיזו את המחוון וראו כמה כוח יש לקהילה שלכם.")
+    st.markdown("הזיזו את המחוון וראו כמה כוח יש לקהילה שלכם.")
 
-    avg_savings = st.slider(
-        "חיסכון ממוצע לאדם בכל הקופות (פנסיה, גמל, השתלמות, ביטוח)",
-        min_value=100_000,
-        max_value=1_500_000,
-        value=500_000,
-        step=50_000,
-        format="₪%d",
-    )
+    # Fixed to Israeli average total savings (pension + gemel + hishtalmut)
+    ISRAELI_AVG_SAVINGS = 400_000
+    current_per_person = ISRAELI_AVG_SAVINGS * CURRENT_EXPLOIT_PCT / 100
+    saving_per_person  = current_per_person - ISRAELI_AVG_SAVINGS * GRADE1_EXPLOIT_PCT / 100
 
-    current_per_person = avg_savings * CURRENT_EXPLOIT_PCT / 100
-    clean_per_person   = avg_savings * GRADE1_EXPLOIT_PCT  / 100
-    saving_per_person  = current_per_person - clean_per_person
+    _CARD_STYLES = {
+        1:           ("#3498db", "#f0f7ff", "👤", "אני", "חוסך ממוצע"),
+        VF_MEMBERS:  ("#8e44ad", "#f8f0ff", "🌱", "6,500 ויגן אקטיב", "חברי הקהילה הפעילה"),
+        VF_FOLLOWERS:("#e67e22", "#fff8f0", "🌍", "400,000 עוקבים", "קהילת ויגן פרנדלי"),
+    }
 
-    def _scale_card(n_people, emoji, title, subtitle, border_color, bg_color, badge_label=""):
+    # Columns: reversed order so RTL renders person LEFT → 6500 MIDDLE → 400K RIGHT
+    c_400k, arr2, c_6500, arr1, c_me = st.columns([4, 0.6, 4, 0.6, 4])
+
+    def _scale_card(n_people):
         saved = n_people * saving_per_person
+        border_color, bg_color, emoji, title, subtitle = _CARD_STYLES[n_people]
         chick = _fmt_big(saved * 0.0285 * MEAT_PCT)
         burg  = _fmt_big(saved * 0.0025 * MEAT_PCT)
         water = _fmt_water_day(saved * 850 * MEAT_PCT / 365)
         co2   = _fmt_big(saved * 3 * MEAT_PCT / 0.2 / 365)
-        badge_html = (
-            f"<div style='font-size:0.7rem;background:{border_color};color:white;"
-            f"border-radius:20px;padding:2px 12px;display:inline-block;margin-bottom:0.6rem'>"
-            f"{badge_label}</div>"
-            if badge_label else "<div style='height:1.6rem'></div>"
-        )
         return f"""
         <div style='background:{bg_color};border:2px solid {border_color};border-radius:16px;
-                    padding:1.4rem 1rem;text-align:center;height:100%'>
-          {badge_html}
+                    padding:1.4rem 1rem;text-align:center'>
           <div style='font-size:2.4rem;line-height:1'>{emoji}</div>
           <div style='font-weight:800;font-size:1rem;margin:0.4rem 0 0.1rem'>{title}</div>
           <div style='font-size:0.75rem;color:#777;margin-bottom:0.9rem'>{subtitle}</div>
@@ -382,40 +380,24 @@ def main():
         </div>
         """
 
-    c1, arr1, c2, arr2, c3 = st.columns([4, 0.6, 4, 0.6, 4])
-    with c1:
-        st.markdown(
-            _scale_card(1, "👤", "אני", "חוסך ממוצע", "#3498db", "#f0f7ff"),
-            unsafe_allow_html=True,
-        )
+    _arrow = "<div style='text-align:center;font-size:2rem;padding-top:5rem;color:#ccc'>→</div>"
+
+    with c_me:
+        st.markdown(_scale_card(1), unsafe_allow_html=True)
     with arr1:
-        st.markdown(
-            "<div style='text-align:center;font-size:2rem;padding-top:5rem;color:#ccc'>→</div>",
-            unsafe_allow_html=True,
-        )
-    with c2:
-        st.markdown(
-            _scale_card(VF_MEMBERS, "🌱", "6,500 ויגן אקטיב", "חברי הקהילה הפעילה",
-                        "#8e44ad", "#f8f0ff", "× 6,500"),
-            unsafe_allow_html=True,
-        )
+        st.markdown(_arrow, unsafe_allow_html=True)
+    with c_6500:
+        st.markdown(_scale_card(VF_MEMBERS), unsafe_allow_html=True)
     with arr2:
-        st.markdown(
-            "<div style='text-align:center;font-size:2rem;padding-top:5rem;color:#ccc'>→</div>",
-            unsafe_allow_html=True,
-        )
-    with c3:
-        st.markdown(
-            _scale_card(VF_FOLLOWERS, "🌍", "400,000 עוקבים", "קהילת ויגן פרנדלי",
-                        "#e67e22", "#fff8f0", "× 400,000"),
-            unsafe_allow_html=True,
-        )
+        st.markdown(_arrow, unsafe_allow_html=True)
+    with c_400k:
+        st.markdown(_scale_card(VF_FOLLOWERS), unsafe_allow_html=True)
 
     st.markdown(
         f"<p style='color:#888;font-size:0.82rem;margin-top:0.8rem;text-align:right'>"
         f"הנחות: שיעור ניצול ממוצע היום — {CURRENT_EXPLOIT_PCT}% · "
         f"שיעור ניצול לאחר מעבר לקופה נקייה — {GRADE1_EXPLOIT_PCT:.2f}% · "
-        f"חיסכון ממוצע לאדם — {fmt_nis(avg_savings)}</p>",
+        f"חיסכון ממוצע ישראלי — {fmt_nis(ISRAELI_AVG_SAVINGS)}</p>",
         unsafe_allow_html=True,
     )
     st.markdown("---")
