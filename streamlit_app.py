@@ -296,38 +296,37 @@ def main():
 
     # Category fractions from 2025Q4 holdings data joined with CFI Animal Usage:
     #   Animal Testing 60.6%, Meat/Dairy/Eggs 14.4%, Leather/Hide/Fur 13.1%, other 12%
-    # Food equivalencies (chickens, burgers) apply only to Meat/Dairy/Eggs companies.
-    # Water/CO₂ apply to Meat + Leather (both categories require livestock).
-    MEAT_PCT    = 0.144
-    LIVESTOCK_PCT = 0.144 + 0.131  # Meat/Dairy/Eggs + Leather/Hide/Fur
+    # All equivalencies apply to Meat/Dairy/Eggs only (14.4%).
+    # Leather companies don't farm cattle — their water/CO₂ is already in the meat category.
+    MEAT_PCT = 0.144
 
     chickens     = total_nis * 0.057 * MEAT_PCT
-    burgers_day  = total_nis * 0.005 * MEAT_PCT
-    water_liters = total_nis * 1700  * LIVESTOCK_PCT
-    co2_kg       = total_nis * 6     * LIVESTOCK_PCT
+    burgers_year = total_nis * 0.005 * MEAT_PCT * 365   # daily rate × 365 = annual
+    water_liters = total_nis * 1700  * MEAT_PCT
+    co2_kg       = total_nis * 6     * MEAT_PCT
 
     st.markdown("**במונחים שאנחנו מבינים, זה שווה ערך ל:**")
     e1, e2, e3, e4 = st.columns(4)
     e1.metric(
         "🐔 עופות ממומנים / שנה", _fmt_big(chickens),
-        help="רק 14.4% מהסכום מושקע בחברות מזון מן החי (Meat/Dairy/Eggs) — מבוסס על הכנסות תעשיית החקלאות העולמית ו-80 מיליארד בעלי חיים שנשחטים מדי שנה.",
+        help="14.4% מהסכום מושקע בחברות מזון מן החי — מבוסס על הכנסות תעשיית החקלאות העולמית ו-80 מיליארד בעלי חיים שנשחטים מדי שנה.",
     )
-    e1.caption(f"לחוסך הישראלי הממוצע: {_fmt_big(chickens / ISRAELI_SAVERS)} עופות/שנה")
+    e1.caption(f"לחוסך הממוצע: {_fmt_big(chickens / ISRAELI_SAVERS)} עופות/שנה")
     e2.metric(
-        "🍔 המבורגרים בקר / יום", _fmt_big(burgers_day),
-        help="רק 14.4% מהסכום מושקע בחברות בשר/חלב — מבוסס על שרשרת אספקת הבקר העולמית וצריכה של ~340 מיליון טון בקר בשנה.",
+        "🍔 המבורגרים בקר / שנה", _fmt_big(burgers_year),
+        help="14.4% מהסכום מושקע בחברות בשר/חלב — מבוסס על 1.2T המבורגרים/שנה עולמי (40% מהבקר) ו-P/S 0.5x.",
     )
-    e2.caption(f"לחוסך הישראלי הממוצע: {_fmt_big(burgers_day / ISRAELI_SAVERS)} המבורגרים/יום")
+    e2.caption(f"לחוסך הממוצע: {_fmt_big(burgers_year / ISRAELI_SAVERS)} המבורגרים/שנה")
     e3.metric(
-        "💧 ליטרים של מים", _fmt_big(water_liters),
-        help=f"27.5% מהסכום מושקע בחברות הדורשות בקר (מזון + עור) — מבוסס על ~15,400 ל׳ לק״ג בקר (UNESCO/WWF). שווה ל-{_fmt_big(water_liters / 2_500_000)} בריכות אולימפיות.",
+        "💧 ליטרים של מים / שנה", _fmt_big(water_liters),
+        help=f"14.4% בחברות מזון מן החי — מבוסס על ~15,400 ל׳ לק״ג בקר (UNESCO/WWF, מחזור חיים מלא). שווה ל-{_fmt_big(water_liters / 2_500_000)} בריכות אולימפיות.",
     )
-    e3.caption(f"לחוסך הישראלי הממוצע: {_fmt_big(water_liters / ISRAELI_SAVERS)} ליטרים")
+    e3.caption(f"לחוסך הממוצע: {_fmt_big(water_liters / ISRAELI_SAVERS / 365)} ליטרים/יום")
     e4.metric(
-        "🌍 ק״ג מקביל CO₂", _fmt_big(co2_kg),
-        help=f"27.5% מהסכום מושקע בחברות הקשורות לגידול בקר — מבוסס על נתוני FAO (~7.1B טון CO₂ בשנה מבע״ח). שווה ל-{_fmt_big(co2_kg / 4_600)} שנות נסיעה ברכב ממוצע.",
+        "🌍 ק״ג מקביל CO₂ / שנה", _fmt_big(co2_kg),
+        help=f"14.4% בחברות מזון מן החי — מבוסס על נתוני FAO (~7.1B טון CO₂/שנה מבע״ח). שווה ל-{_fmt_big(co2_kg / 4_600)} שנות נסיעה ברכב ממוצע.",
     )
-    e4.caption(f"לחוסך הישראלי הממוצע: {_fmt_big(co2_kg / ISRAELI_SAVERS)} ק״ג CO₂")
+    e4.caption(f"לחוסך הממוצע: {_fmt_big(co2_kg / ISRAELI_SAVERS / 0.2 / 365)} ק״מ/יום")
 
     st.markdown("---")
     st.subheader("כוח השינוי של קהילת ויגן פרנדלי")
@@ -353,16 +352,17 @@ def main():
         saved = n_people * saving_per_person
 
         # Community (annual for animals; daily for water/CO₂ as requested)
+        # Community (annual for animals; daily for water/CO₂)
         chick_c   = _fmt_big(saved * 0.057 * MEAT_PCT)
         burg_c    = _fmt_big(saved * 0.005 * MEAT_PCT * 365)
-        water_c   = _fmt_big(saved * 1700  * LIVESTOCK_PCT / 365)
-        co2_km_c  = _fmt_big(saved * 6     * LIVESTOCK_PCT / 0.2 / 365)
+        water_c   = _fmt_big(saved * 1700  * MEAT_PCT / 365)
+        co2_km_c  = _fmt_big(saved * 6     * MEAT_PCT / 0.2 / 365)
 
-        # Per-person (same units)
+        # Per-person (same units, uses saving_per_person not saved/n_people)
         chick_pp  = _fmt_big(saving_per_person * 0.057 * MEAT_PCT)
         burg_pp   = _fmt_big(saving_per_person * 0.005 * MEAT_PCT * 365)
-        water_pp  = _fmt_big(saving_per_person * 1700  * LIVESTOCK_PCT / 365)
-        co2_km_pp = _fmt_big(saving_per_person * 6     * LIVESTOCK_PCT / 0.2 / 365)
+        water_pp  = _fmt_big(saving_per_person * 1700  * MEAT_PCT / 365)
+        co2_km_pp = _fmt_big(saving_per_person * 6     * MEAT_PCT / 0.2 / 365)
 
         return f"""
         <div style='background:{color};border-radius:14px;padding:1.5rem;color:white'>
@@ -381,7 +381,7 @@ def main():
               <div style='font-size:0.68rem;opacity:0.7;margin-top:0.3rem'>יוצאים מהניצול</div>
             </div>
             <div style='background:rgba(255,255,255,0.18);border-radius:10px;padding:1rem'>
-              <div style='font-size:0.72rem;opacity:0.85;margin-bottom:0.5rem;font-weight:600;text-align:center'>🌍 כקהילה</div>
+              <div style='font-size:0.72rem;opacity:0.85;margin-bottom:0.5rem;font-weight:600;text-align:center'>🌍 סה״כ הקהילה</div>
               <div style='font-size:0.83rem;line-height:2'>
                 🐔 {chick_c} עופות/שנה<br>
                 🍔 {burg_c} המבורגרים/שנה<br>
@@ -390,7 +390,7 @@ def main():
               </div>
             </div>
             <div style='background:rgba(255,255,255,0.18);border-radius:10px;padding:1rem'>
-              <div style='font-size:0.72rem;opacity:0.85;margin-bottom:0.5rem;font-weight:600;text-align:center'>👤 לאדם</div>
+              <div style='font-size:0.72rem;opacity:0.85;margin-bottom:0.5rem;font-weight:600;text-align:center'>👤 לאדם אחד</div>
               <div style='font-size:0.83rem;line-height:2'>
                 🐔 {chick_pp} עופות/שנה<br>
                 🍔 {burg_pp} המבורגרים/שנה<br>
